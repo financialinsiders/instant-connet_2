@@ -89,14 +89,10 @@ class IC_agent_api{
 		global $wpdb;
 
 		$lead = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
-
+		unset($lead['endorser_id']);
 		$wpdb->update("wp_leads", $lead, array('id' => $_GET['id']));
 
-		if($lead_id) {
-			$response = array('status' => 'Success', 'msg' => 'Lead updated successfully');
-		} else {
-			$response = array('status' => 'Error', 'msg' => 'Try again later!!');
-		}
+		$response = array('status' => 'Success', 'msg' => 'Lead updated successfully');
 		
 		echo json_encode($response);
 		die(0);
@@ -1286,7 +1282,7 @@ wp_redirect($link);
 		
 		//print_r("select * from wp_leads where agent_id = " . $agent_id ." order by ". $order ." ". $orderby." limit " .$offset.", ".$length);
 
-		$recordsFiltered = $wpdb->get_results("select * from wp_leads where $ss agent_id = " . $agent_id ." order by ". $order ." ". $orderby." limit " .$start.", ".$length."");
+		$recordsFiltered = $wpdb->get_results("select * from wp_leads where $ss agent_id = " . $agent_id ." order by ". $order ." ". $orderby." limit " .$offset.", ".$length."");
 		
 		//echo $recordsFiltered;
 
@@ -3611,7 +3607,11 @@ wp_redirect($link);
 		$lead = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
 		//$lead = (array)json_decode(file_get_contents('php://input'));
 		
-		$resuts = $wpdb->get_results('select * from wp_leads where email = "'. $lead['email'].'"');
+		$resuts = array();
+		if($lead['email']){
+			$resuts = $wpdb->get_results('select * from wp_leads where email = "'. $lead['email'].'"');
+		}
+		
 		
 		$leadtoinsert = array('endorser_id' => $lead['endorser_id'], 'email' => $lead['email'], 'first_name' => $lead['first_name'], 'last_name' => $lead['last_name'], 'agent_id' => $lead['agent_id'], 'created' => date("Y-m-d H:i:s"), 'fb_ref' => $lead['fb_ref']);
 		
@@ -3626,17 +3626,13 @@ wp_redirect($link);
 			//is_wp_error();
 			//print_r($ress);
 
-			$msg = 'Lead created successfully asdasd';
+			$msg = 'Lead created successfully';
 			$lead_id = $wpdb->insert_id;
-
-
 
 		}
 
 
 		if($lead_id) {
-			
-			
 			if(isset($lead['type'])){ 
 				$type = $lead['type'];
 
