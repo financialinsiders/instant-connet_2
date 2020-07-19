@@ -4,6 +4,7 @@
 //$ipInfo = json_decode($ipInfo);
 //$timezone = $ipInfo->timezone;
 //date_default_timezone_set($timezone);
+// TESTING COMMIT AND DEPLOYMENT!
 
 if ( ! function_exists( 'wp_handle_upload' ) ) {
     require_once( ABSPATH . 'wp-admin/includes/file.php' );
