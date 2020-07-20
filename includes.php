@@ -20,7 +20,7 @@ use OpenTok\Role;
 
 function opentok_token($sessionId = '')
 {
-	$apiObj = new OpenTok(API_KEY, API_SECRET);
+	/*$apiObj = new OpenTok(API_KEY, API_SECRET);
 	
 	if(!$sessionId) {
 		$session = $apiObj->createSession();
@@ -30,8 +30,12 @@ function opentok_token($sessionId = '')
 	$token = $apiObj->generateToken($sessionId, array(
     'role'       => Role::MODERATOR,
     'expireTime' => time()+(7 * 24 * 60 * 60)));
+return array('sessionId' => $sessionId, 'token' => $token);
+*/
 
-	return array('sessionId' => $sessionId, 'token' => $token);
+return json_decode(file_get_contents('https://financialinsiders.ca/wp-content/plugins/instant-connect/vendor/test.php?sessionId='.$sessionId));
+
+
 }
 
 function opentok_session_id() {
