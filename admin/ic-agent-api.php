@@ -93,7 +93,7 @@ class IC_agent_api{
 		unset($lead['endorser_id']);
 		$wpdb->update("wp_leads", $lead, array('id' => $_GET['id']));
 
-		$response = array('status' => 'Success', 'msg' => 'Lead updated successfully');
+		$response = array('status' => 'Success', 'id' => $_GET['id'], 'msg' => 'Lead updated successfully');
 		
 		echo json_encode($response);
 		die(0);
