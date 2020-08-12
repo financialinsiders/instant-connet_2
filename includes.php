@@ -33,7 +33,7 @@ function opentok_token($sessionId = '')
 return array('sessionId' => $sessionId, 'token' => $token);
 */
 
-return json_decode(file_get_contents('https://financialinsiders.ca/wp-content/plugins/instant-connect/vendor/test.php?sessionId='.$sessionId));
+return (array) json_decode(file_get_contents('https://financialinsiders.ca/wp-content/plugins/instant-connect/vendor/test.php?sessionId='.$sessionId));
 
 
 }
