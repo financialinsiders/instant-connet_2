@@ -461,6 +461,9 @@ if (scope.$last === true) {
 	$scope.publisher = OTSession.publishers;
 
 	$scope.initiate_screen_sharing = function(){
+		if(!$scope.is_admin && !$scope.full_control)
+			return;
+		
 		OTSession.initiate_screenshring();
 	};
 
