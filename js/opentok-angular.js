@@ -41,11 +41,13 @@ ng.module('opentok', [])
 
           OTSession.session.on({
             sessionConnected: function() {
+              console.log("sessionConnected");
               OTSession.publishers.forEach(function(publisher) {
                 OTSession.session.publish(publisher);
               });
             },
             streamCreated: function(event) {
+              console.log("streamCreated");
               $rootScope.$apply(function() {
                 if (event.stream.videoType === 'screen') {
                   OTSession.screenshare.push(event.stream);
@@ -65,6 +67,7 @@ ng.module('opentok', [])
               });
             },
             streamDestroyed: function(event) {
+              console.log("sessionConnected");
               $rootScope.$apply(function() {
                 if (event.stream.videoType === 'screen') {
                   OTSession.screenshare.splice(OTSession.streams.indexOf(event.stream), 1);
@@ -83,30 +86,20 @@ ng.module('opentok', [])
               });
             },
             sessionDisconnected: function() {
+              console.log("sessionDisconnected");
               $rootScope.$apply(function() {
-                if (event.stream.videoType === 'screen') {
-                  OTSession.screenshare.splice(0, OTSession.streams.length);
-                }
-                else
-                {
-                  OTSession.streams.splice(0, OTSession.streams.length);
-
-                  if('Agent' == event.stream.name){
-                    OTSession.adminstream.splice(0, OTSession.adminstream.length);
-                  }
-                  else{
-                    OTSession.userstreams.splice(0, OTSession.userstreams.length);
-                  }
-                }
+                OTSession.streams.splice(0, OTSession.streams.length);
                 OTSession.connections.splice(0, OTSession.connections.length);
               });
             },
             connectionCreated: function(event) {
+              console.log("connectionCreated");
               $rootScope.$apply(function() {
                 OTSession.connections.push(event.connection);
               });
             },
             connectionDestroyed: function(event) {
+              console.log("connectionDestroyed");
               $rootScope.$apply(function() {
                 OTSession.connections.splice(OTSession.connections.indexOf(event.connection), 1);
               });
@@ -118,11 +111,11 @@ ng.module('opentok', [])
           });
 
           
-          OT.registerScreenSharingExtension('chrome', extensionId, 2);
+          OT.registerScreenSharingExtension('chrome', 'gbkbalcjeoekkjbpgegjippmnlcmcbmp', 2);
         
           this.trigger('init');
         },
-        initiate_screenshring : function(){
+        initiate_screenshring : function(){//return false;
           OT.checkScreenSharingCapability(function(response) {
           console.info(response);
           if (!response.supported || response.extensionRegistered === false) {
@@ -138,15 +131,15 @@ ng.module('opentok', [])
             // Screen sharing is available. Publish the screen.
             // Create an element, but do not display it in the HTML DOM:
             var screenContainerElement = document.createElement('div');
-            var screenSharingPublisher = OT.initPublisher(
-              screenContainerElement,
+            //$('#screens-container').append(screenContainerElement);
+            $rootScope.screenSharingPublisher = OT.initPublisher(screenContainerElement,
               { videoSource : 'screen' },
               function(error) {
                 if (error) {
                   alert('Something went wrong: ' + error.message);
                 } else {
                   OTSession.session.publish(
-                    screenSharingPublisher,
+                    $rootScope.screenSharingPublisher,
                     function(error) {
                       if (error) {
                         alert('Something went wrong: ' + error.message);
@@ -154,6 +147,13 @@ ng.module('opentok', [])
                     });
                 }
               });
+
+            $rootScope.screenSharingPublisher.on({
+              streamCreated: function(e) {
+                OTSession.session.emit('streamCreated', e);
+              }
+            });
+
             }
           });
         }
@@ -230,6 +230,71 @@ ng.module('opentok', [])
             },
             streamCreated: function() {
               scope.$emit('otStreamCreated');
+            },
+            streamDestroyed: function() {
+              scope.$emit('otStreamDestroyed');
+            }
+          });
+          scope.$on('$destroy', function() {
+            if (OTSession.session) OTSession.session.unpublish(scope.publisher);
+            else scope.publisher.destroy();
+            OTSession.publishers = OTSession.publishers.filter(function(publisher) {
+              return publisher !== scope.publisher;
+            });
+            scope.publisher = null;
+          });
+          if (OTSession.session && (OTSession.session.connected ||
+            (OTSession.session.isConnected && OTSession.session.isConnected()))) {
+            OTSession.session.publish(scope.publisher, function(err) {
+              if (err) {
+                scope.$emit('otPublisherError', err, scope.publisher);
+              }
+            });
+          }
+          OTSession.publishers.push(scope.publisher);
+        }
+      };
+    }
+  ])
+  .directive('otScreenshare', ['OTSession',
+    function(OTSession) {
+      return {
+        restrict: 'E',
+        scope: {
+          props: '&'
+        },
+        link: function(scope, element, attrs) {
+          var props = scope.props() || {};
+          props.width = props.width ? props.width : ng.element(element).width();
+          props.height = props.height ? props.height : ng.element(element).height();
+          var oldChildren = ng.element(element).children();
+          scope.publisher = OT.initPublisher(attrs.apikey || OTSession.session.apiKey,
+            element[0], props, function(err) {
+              if (err) {
+                scope.$emit('otPublisherError', err, scope.publisher);
+              }
+            });
+          // Make transcluding work manually by putting the children back in there
+          ng.element(element).append(oldChildren);
+          scope.publisher.on({
+            accessDenied: function() {
+              scope.$emit('otAccessDenied');
+            },
+            accessDialogOpened: function() {
+              scope.$emit('otAccessDialogOpened');
+            },
+            accessDialogClosed: function() {
+              scope.$emit('otAccessDialogClosed');
+            },
+            accessAllowed: function() {
+              ng.element(element).addClass('allowed');
+              scope.$emit('otAccessAllowed');
+            },
+            loaded: function() {
+              scope.$emit('otLayout');
+            },
+            streamCreated: function(e) {
+              OTSession.session.emit('streamCreated', e);
             },
             streamDestroyed: function() {
               scope.$emit('otStreamDestroyed');

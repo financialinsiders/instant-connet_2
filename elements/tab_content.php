@@ -131,12 +131,18 @@
 <!-- SCREEN SHARE WINDOW -->
 <div ng-if="tab.type == 'screenshare'" class="clearfix col-xs-12 no-pad meeting-pane">
     <div class="col-sm-12 col-xs-12 no-pad wh100 tab-inner-div" ng-init="initiate_screen_sharing();">
-        <ot-layout props="{animate:true}">
-          <ot-subscriber ng-repeat="screenshare in streams" 
+        <ot-layout ng-if="!is_admin && !full_control" props="{animate:true}">
+          <ot-subscriber ng-repeat="stream in screenshare" 
             stream="stream" 
             props="{style: {nameDisplayMode: 'off'}}">
           </ot-subscriber>
         </ot-layout>
+        <!-- <ot-layout ng-if="is_admin || full_control" props="{animate:true}">
+          <ot-screenshare
+            props="{videoSource: 'screen'}">
+          </ot-screenshare>
+        </ot-layout> -->
+        <div style="font-size: 40px;margin-top: 200px;text-align: center;">Your screen in sharing</div>
     </div>
      <div class="pane-footer whiteboard-tools col-xs-12">
         <div class="col-sm-3 no-pad"> 

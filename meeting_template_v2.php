@@ -316,7 +316,6 @@ Instant Connect UI
               </ot-layout>
               <div class="agent-name hide">Agent Name <span class="designations">C.F.C</span></div>
             </div>
-         
         </div> 
 
         <div ng-if="streams.length == 1 && is_admin" class="video-container agent user-video-single-container">
@@ -542,7 +541,7 @@ Instant Connect UI
 <script src="<?= plugin_dir_url(__FILE__); ?>dist/v2/js/app.min.js"></script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.9.25/paper-core.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="//static.opentok.com/v2/js/opentok.js" type="text/javascript" charset="utf-8"></script>
+<script src="//static.opentok.com/v2/js/opentok.min.js" type="text/javascript" charset="utf-8"></script>
 <script src="<?= plugin_dir_url(__FILE__); ?>js/opentok-layout.js" type="text/javascript" charset="utf-8"></script>
 <script src="<?= plugin_dir_url(__FILE__); ?>js/opentok-angular.js" type="text/javascript" charset="utf-8"></script>
 <script src="<?= plugin_dir_url(__FILE__); ?>js/opentok-whiteboard.js" type="text/javascript" charset="utf-8"></script>
