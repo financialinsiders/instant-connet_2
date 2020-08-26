@@ -25,8 +25,6 @@ class IC_agent_api{
 	    header("Access-Control-Allow-Headers: X-Requested-With");
 	   
 
-
-	    
 	    $functions = array('ic_all_letter_list', 'ic_agent_login', 'ic_site_pages', 'ic_add_endorser', 'ic_send_invitation',
 	    	'ic_send_endorsement_invitation', 'ic_update_endorser', 'ic_endorser_list', 'ic_get_endorser_list', 'ic_add_create_email_template',
 	    	'ic_update_email_template', 'ic_endorser_letter_list', 'ic_endorsement_letter_list',
@@ -60,14 +58,14 @@ class IC_agent_api{
 			'ic_copy_chat_bot', 'ic_agent_status_frontend', 'ic_update_profile_page_data', 'ic_get_profile_page_data',
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
-			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro'
+			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
+			'ic_endorser_session_info', 'ic_endorser_email_info'
 	    );
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
-	    
 	}
 
 	function ic_get_endorser_intro(){
@@ -155,7 +153,7 @@ class IC_agent_api{
 		}
 
 		if($_POST['type'] == 'email'){
-			
+			$parent_id = 0;
 			$respdata = array();
 			foreach ($_POST['contacts'] as $key => $value) {
 				$value = (array)$value;
@@ -170,9 +168,17 @@ class IC_agent_api{
 						'link' => get_permalink($data['page_id']),
 				  		'params' => serialize($data),
 				  		'endorser_id' => $_POST['endorser_id'],
-						'agent_id' => $_POST['agent_id']
+						'agent_id' => $_POST['agent_id'],
+						'ts' => date('Y-m-d H:i:s'),
+						'type' => $_POST['type'],
+						'parent_id' => $parent_id,
+						'email' => $value['email']
 					)
 				);
+
+				if($parent_id == 0){
+					$parent_id = $wpdb->insert_id;
+				}
 
 				$link = site_url('introduction.php?id='.$wpdb->insert_id);
 
@@ -216,7 +222,9 @@ class IC_agent_api{
 					'link' => get_permalink($data['bot_id']),
 			  		'params' => serialize($_POST),
 			  		'endorser_id' => $_POST['endorser_id'],
-					'agent_id' => $_POST['agent_id']
+					'agent_id' => $_POST['agent_id'],
+					'ts' => date('Y-m-d H:i:s'),
+					'type' => $_POST['type']
 				)
 			);
 
@@ -229,6 +237,68 @@ class IC_agent_api{
         die(0);
 	}
 
+	function ic_endorser_session_info(){
+		global $wpdb;
+
+		$res = $wpdb->get_results('select * from wp_short_link where endorser_id = '. $_GET['endorser_id']);
+		$response = array('Status' => 'Success', 'endorserId' => $_GET['endorser_id']);
+
+		$messages = array();
+		$videos = array();
+
+		foreach ($res as $key => $value) {
+			$params = (array) unserialize($value->params);
+			if($params['attention_message']){
+				$messages[] = array('date' => $value->ts, 'message' => $params['attention_message']);
+			}
+
+			if($params['video_url']){
+				$videos[] = array('date' => $value->ts, 'videoUrl' => $params['video_url']);
+			}
+		}
+
+		$response['messages'] = $messages;
+		$response['videos'] = $videos;
+
+		echo json_encode($response);
+        die(0);
+	}
+
+	function ic_endorser_email_info(){
+		global $wpdb;
+
+		$res = $wpdb->get_results('select * from wp_short_link where type = "email" and parent = 0 and endorser_id = '. $_GET['endorser_id']);
+		$response = array('Status' => 'Success', 'endorserId' => $_GET['endorser_id']);
+
+		$messages = array();
+
+		foreach ($res as $key => $value) {
+			$params = (array) unserialize($value->params);
+			$tmp = array('date' => $value->ts);
+			if($params['attention_message']){
+				$tmp['message'] = $params['attention_message'];
+			}
+
+			if($params['video_url']){
+				$tmp['videoUrl'] = $params['video_url'];
+			}
+
+			$tmp['emailList'] = array();
+			$tmp['emailList'][] = array('email' => $value->email, 'email_status' => $value->email_status);
+
+			$res2 = $wpdb->get_results('select * from wp_short_link where parent_id = '. $value->id);
+			foreach ($res2 as $key2 => $value2) {
+				$tmp['emailList'][] = array('email' => $value2->email, 'email_status' => $value2->email_status);
+			}
+
+			$messages[] = $tmp;
+		}
+
+		$response['messages'] = $messages;
+
+		echo json_encode($response);
+        die(0);
+	}
 
 	function ic_link(){
 		global $wpdb;
@@ -3228,6 +3298,7 @@ wp_redirect($link);
 			$invitation_points = $wpdb->get_row("select sum(points) as points from wp_".$blog_id."_points_transaction where created like '".date("Y-m-")."%' and type in ('email_invitation', 'fbShare', 'liShare') and endorser_id='".$current_user->ID."'");
 
 			$campaign = get_user_meta($current_user->ID, 'campaign', true);
+			$intro_bot = get_user_meta($current_user->ID, 'intro_bot', true);
 			$templates = $wpdb->get_row("select * from wp_".$blog_id."_campaign_templates where name = 'Endorsement Letter' and campaign_id=".$campaign);
 
 			$content = str_replace("<br />", "", stripslashes(stripslashes($templates->template)));
@@ -3274,6 +3345,7 @@ wp_redirect($link);
 					'agent_avatar' => get_avatar_url($agent_id),
 					'point_settings' =>  $endorsement_settings,
 					'campaign' => $campaign,
+					'intro_bot' => $intro_bot,
 					'landing_page' => $landingPageContent,
 					'strategy_link' => $pagelink,
 					'video' => $video
@@ -4643,6 +4715,7 @@ wp_redirect($link);
 				update_user_meta($user_id, 'endorser_letter', $user['endorser_letter']);
 				update_user_meta($user_id, 'endorsement_letter', $user['endorsement_letter']);
 				update_user_meta($user_id, 'campaign', $user['campaign']);
+				update_user_meta($user_id, 'intro_bot', $user['intro_bot']);
 				update_user_meta($user_id, 'social_campaign', $user['social_campaign']);
 				update_user_meta($user_id, 'video', $user['video']);
 				update_user_meta($user_id, 'landingPageContent', $user['landingPageContent']);

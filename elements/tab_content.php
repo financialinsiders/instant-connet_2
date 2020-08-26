@@ -142,7 +142,7 @@
             props="{videoSource: 'screen'}">
           </ot-screenshare>
         </ot-layout> -->
-        <div style="font-size: 40px;margin-top: 200px;text-align: center;">Your screen in sharing</div>
+        <div ng-if="is_admin !! full_control" style="font-size: 40px;margin-top: 200px;text-align: center;">Your screen in sharing</div>
     </div>
      <div class="pane-footer whiteboard-tools col-xs-12">
         <div class="col-sm-3 no-pad"> 
