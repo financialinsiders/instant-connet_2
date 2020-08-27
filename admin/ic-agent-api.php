@@ -59,7 +59,7 @@ class IC_agent_api{
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
-			'ic_endorser_session_info', 'ic_endorser_email_info'
+			'ic_endorser_session_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -131,6 +131,49 @@ class IC_agent_api{
         die(0);
 	}
 
+	function ic_resend_introduction(){
+		global $wpdb, $ntm_mail, $endorsements;
+		$_POST = (array) json_decode(file_get_contents('php://input'));
+
+		$blog_id = get_current_blog_id();
+		$agent_id = get_blog_option($blog_id, 'agent_id');
+		$endorser_id = $_POST['endorser_id'];
+
+		$invitation = (array) $wpdb->get_row('select * from wp_short_link where id = '. $_POST['invitation_id']);
+
+		$params = unserialize($invitation['params']);
+
+		$link = site_url('introduction.php?id='.$_POST['invitation_id']);
+
+		$agent_full_name = get_user_meta($agent_id, 'agent_full_name', true);
+
+		$endorser_name = get_user_meta($endorser_id, 'first_name', true).' '.get_user_meta($endorser_id, 'last_name', true);
+
+		$track_image = "<img src='".site_url('wp-admin/admin-ajax.php?action=ic_track_introduction_open&ref='.base64_encode(base64_encode($_POST['invitation_id'])))."' width='1' height='1'>";
+
+		$content = "<div>$endorser_name wants to introduce you to $agent_full_name from Financial Insiders <a href='$link'>Click Here to View</a>$track_image</div>";
+
+		$subject = "$endorser_name wants to introduce $agent_full_name of Financial Insiders";
+
+		if(isset($params['video_url'])){
+			$vid_src = $_POST['video_url'].'.png';
+			$content .= "<div><img src='$vid_src'></div>";
+
+			$ntm_mail->send_mail($invitation['email'], $subject, $content, '', '');
+		} else{
+			
+			$ntm_mail->send_mail($invitation['email'], $subject, $content, '', '');
+			
+		}
+
+		$wpdb->update('wp_short_link', array('email_status' => 'resent'), array('id' => $_POST['invitation_id']));
+
+		$response = array('Status' => 'Success');
+
+		echo json_encode($response);
+        die(0);
+	}
+
 	function ic_create_introduction(){
 		global $wpdb, $ntm_mail, $endorsements;
 		$_POST = (array) json_decode(file_get_contents('php://input'));
@@ -172,13 +215,18 @@ class IC_agent_api{
 						'ts' => date('Y-m-d H:i:s'),
 						'type' => $_POST['type'],
 						'parent_id' => $parent_id,
-						'email' => $value['email']
+						'email' => $value['email'],
+						'email_status' => 'pending'
 					)
 				);
 
+				$intro_id = $wpdb->insert_id;
+
 				if($parent_id == 0){
-					$parent_id = $wpdb->insert_id;
+					$parent_id = $intro_id;
 				}
+
+				$track_image = "<img src='".site_url('wp-admin/admin-ajax.php?action=ic_track_introduction_open&ref='.base64_encode(base64_encode($intro_id)))."' width='1' height='1'>";
 
 				$link = site_url('introduction.php?id='.$wpdb->insert_id);
 
@@ -186,7 +234,7 @@ class IC_agent_api{
 
 				$endorser_name = get_user_meta($endorser_id, 'first_name', true).' '.get_user_meta($endorser_id, 'last_name', true);
 
-				$content = "<div>$endorser_name wants to introduce you to $agent_full_name from Financial Insiders <a href='$link'>Click Here to View</div>";
+				$content = "<div>$endorser_name wants to introduce you to $agent_full_name from Financial Insiders <a href='$link'>Click Here to View</a> $track_image</div>";
 
 				$subject = "$endorser_name wants to introduce $agent_full_name of Financial Insiders";
 
@@ -236,6 +284,23 @@ class IC_agent_api{
 		echo json_encode($response);
         die(0);
 	}
+
+	function ic_track_introduction_open(){
+
+		global $wpdb;
+
+		$track_link = base64_decode(base64_decode($_GET['ref']));
+		$wpdb->update("wp_short_link", 
+			array("email_status" => 'seen'), 
+			array('id' => $track_link)
+		);
+
+		header('Content-Type: image/png');
+		echo base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICBAEAOw==');
+		exit;
+	}
+				
+				
 
 	function ic_endorser_session_info(){
 		global $wpdb;
