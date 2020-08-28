@@ -59,7 +59,8 @@ class IC_agent_api{
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
-			'ic_endorser_session_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open'
+			'ic_endorser_session_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
+			'ic_update_default_endorser_bot'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -804,6 +805,75 @@ wp_redirect($link);
 		}
 
 		return $res;
+	}
+
+	function ic_update_default_endorser_bot(){
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+
+		update_user_meta($_POST['endorser_id'], 'intro_bot', $_POST['bot_id']);
+
+		echo json_encode(array('status' => 'Success', 'data' => $this->ic_endorser_bot(1)));
+
+		die(0);
+	}
+
+	function ic_add_endorser_bot(){
+
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+
+		$endorser_bot = get_user_meta($_POST['endorser_id'], 'endorser_bot', true);
+		
+		if($endorser_bot && is_array($endorser_bot)){
+			$endorser_bot[] = $_POST['bot_id'];
+		} else {
+			$endorser_bot = array($_POST['bot_id']);
+		}
+
+		update_user_meta($_POST['endorser_id'], 'endorser_bot', $endorser_bot);
+
+		echo json_encode(array('status' => 'Success', 'data' => $this->ic_endorser_bot(1)));
+
+		die(0);
+	}
+
+	function ic_endorser_bot($st = 1){
+
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+
+		if(isset($_POST['endorser_id'])) {		
+			$siteID = get_active_blog_for_user( $_GET['endorser_id'] )->blog_id;
+			switch_to_blog( $siteID );
+		}
+
+		$endorser_bot = get_user_meta($_POST['endorser_id'], 'endorser_bot', true);
+		$intro_bot = get_user_meta($_POST['endorser_id'], 'intro_bot', true);
+		if(!$endorser_bot || !is_array($endorser_bot)){
+			$endorser_bot = array();
+		}
+
+		$args = array(
+		    'post__in' => $endorser_bot
+		);
+
+		$posts = get_posts($args);
+		$res = array();
+		foreach ($posts as $p) :
+		    $res[] = array(
+		    	'id' => $p->ID,
+		    	'title' => $p->post_title,
+		    	'description' => $p->post_content,
+		    	'default_bot' => $intro_bot == $p->ID,
+		    	'appearance' => get_post_meta($p->ID, 'appearance', true)
+		    );
+		endforeach;
+
+		if($st){
+			return $res;
+		} else {
+			echo json_encode(array('status' => 'Success', 'data' => $res));
+
+			die(0);
+		}
 	}
 
 	function ic_retrieve_chat_bot($botId, $fl = 0){
@@ -4781,6 +4851,7 @@ wp_redirect($link);
 				update_user_meta($user_id, 'endorsement_letter', $user['endorsement_letter']);
 				update_user_meta($user_id, 'campaign', $user['campaign']);
 				update_user_meta($user_id, 'intro_bot', $user['intro_bot']);
+				update_user_meta($user_id, 'endorser_bot', array($user['intro_bot']));
 				update_user_meta($user_id, 'social_campaign', $user['social_campaign']);
 				update_user_meta($user_id, 'video', $user['video']);
 				update_user_meta($user_id, 'landingPageContent', $user['landingPageContent']);
