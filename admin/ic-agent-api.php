@@ -852,7 +852,9 @@ wp_redirect($link);
 		}
 
 		$args = array(
-		    'post__in' => $endorser_bot
+		    'include'   => $endorser_bot,
+		    'post_type' => 'ic-chat-bot',
+		    'orderby'   => 'post__in',
 		);
 		//print_r($args);
 		$posts = get_posts($args);
