@@ -829,7 +829,7 @@ wp_redirect($link);
 			$endorser_bot = array($_POST['bot_id']);
 		}
 
-		update_user_meta($_POST['endorser_id'], 'endorser_bot', $endorser_bot);
+		update_user_meta($_POST['endorser_id'], 'endorser_bot', array_unique($endorser_bot));
 
 		echo json_encode(array('status' => 'Success', 'data' => $this->ic_endorser_bot(1)));
 
