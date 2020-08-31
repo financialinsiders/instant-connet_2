@@ -841,7 +841,7 @@ wp_redirect($link);
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
 
 		if(isset($_POST['endorser_id'])) {		
-			$siteID = get_active_blog_for_user( $_GET['endorser_id'] )->blog_id;
+			$siteID = get_active_blog_for_user( $_POST['endorser_id'] )->blog_id;
 			switch_to_blog( $siteID );
 		}
 
@@ -854,7 +854,7 @@ wp_redirect($link);
 		$args = array(
 		    'post__in' => $endorser_bot
 		);
-
+		//print_r($args);
 		$posts = get_posts($args);
 		$res = array();
 		foreach ($posts as $p) :
