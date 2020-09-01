@@ -60,7 +60,7 @@ class IC_agent_api{
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
 			'ic_endorser_session_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
-			'ic_update_default_endorser_bot'
+			'ic_update_default_endorser_bot', 'dis_approve_endorser'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -5204,9 +5204,27 @@ wp_redirect($link);
 	}
 
 	function approve_endorser(){
-		update_user_meta($_GET['id'], 'issuePoints', 1);
-
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		$user_id = $_POST['id'];
+		update_user_meta($user_id, 'issuePoints', 1);
+		update_user_meta($user_id, 'campaign', $_POST['campaign']);
+		update_user_meta($user_id, 'intro_bot', $_POST['intro_bot']);
+		update_user_meta($user_id, 'endorser_bot', array($_POST['intro_bot']));
+		update_user_meta($user_id, 'social_campaign', $_POST['social_campaign']);
+		update_user_meta($user_id, 'video', $_POST['video']);
+		update_user_meta($user_id, 'landingPageContent', $_POST['landingPageContent']);
+		update_user_meta($user_id, 'have_intro_points', $_POST['have_intro_points']);
+		update_user_meta($user_id, 'intro_points', $_POST['intro_points']);
 		$response = array('status' => 'Success', 'msg' => 'Endorser approved successfully');
+		
+		echo json_encode($response);
+		die(0);
+	}
+
+	function dis_approve_endorser(){
+		update_user_meta($_GET['id'], 'issuePoints', 0);
+
+		$response = array('status' => 'Success', 'msg' => 'Endorser disapproved successfully');
 		
 		echo json_encode($response);
 		die(0);
