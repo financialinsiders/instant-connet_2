@@ -60,7 +60,7 @@ class IC_agent_api{
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
 			'ic_endorser_session_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
-			'ic_update_default_endorser_bot', 'dis_approve_endorser'
+			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -834,6 +834,34 @@ wp_redirect($link);
 		echo json_encode(array('status' => 'Success', 'data' => $this->ic_endorser_bot(1)));
 
 		die(0);
+	}
+
+	function ic_endorser_update_browser_id() {
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		if(isset($_POST['endorser_id'])) {	
+			$siteID = get_active_blog_for_user( $_POST['endorser_id'] )->blog_id;
+			switch_to_blog($siteId);
+
+		}
+		$uniqueFBIDs = get_user_meta($_POST['endorser_id'], 'browser_fb_id', false);
+		array_push($uniqueFBIDs, $_POST['fb_id']);
+		update_user_meta($_POST['endorser_id'], 'browser_fb_id', $data , false);
+		echo json_encode(array('status' => 'Success'));			
+		die(0);
+
+		
+	}
+
+	function ic_endorser_get_browser_id() {
+		if(isset($_GET['endorser_id'])) {	
+			$siteID = get_active_blog_for_user( $_GET['endorser_id'] )->blog_id;
+			switch_to_blog($siteId);
+		}
+
+		$fb_ids = get_user_meta($_GET['endorser_id'], 'browser_fb_id', false);
+		echo json_encode(array('status' => 'Success', 'data' => $fb_ids));
+		die(0);
+
 	}
 
 	function ic_endorser_bot($st = 1){
@@ -3424,11 +3452,12 @@ wp_redirect($link);
 
 		if(!is_wp_error($current_user)) {
 			$blog_id = get_active_blog_for_user( $current_user->ID )->blog_id;
+
 			$agent_id = get_blog_option($blog_id, 'agent_id');
 			$current_agent_data = get_userdata($agent_id);
     		update_user_meta( $current_user->ID, 'last_login', time() );
     		$current_user_data = get_userdata($current_user->ID);
-
+    		$siteUrl = get_site_url(get_user_meta((int)$current_user->data->ID, 'primary_blog', true));
 			$points = $wpdb->get_row("select sum(points) as points from wp_".$blog_id."_points_transaction where queue = 0 and endorser_id=".$current_user->ID);
 
 			$points2 = $wpdb->get_row("select sum(points) as points from wp_".$blog_id."_points_transaction where queue = 1 and endorser_id=".$current_user->ID);
@@ -3485,7 +3514,8 @@ wp_redirect($link);
 					'intro_bot' => $intro_bot,
 					'landing_page' => $landingPageContent,
 					'strategy_link' => $pagelink,
-					'video' => $video
+					'video' => $video,
+					'apiURL' => $siteUrl
 				);
 			$response = array('status' => 'Success', 'data' => $data);
 		} else {
