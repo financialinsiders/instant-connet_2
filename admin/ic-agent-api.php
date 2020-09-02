@@ -4887,6 +4887,9 @@ wp_redirect($link);
 				update_user_meta($user_id, 'social_campaign', $user['social_campaign']);
 				update_user_meta($user_id, 'video', $user['video']);
 				update_user_meta($user_id, 'landingPageContent', $user['landingPageContent']);
+				update_user_meta($user_id, 'have_intro_points', $_POST['have_intro_points']);
+				update_user_meta($user_id, 'intro_points', $_POST['intro_points']);
+				
 				if(isset($user['password'])) {
 					update_user_meta($user_id, 'issuePoints', $user['issue_points'] ? 1 : 0);
 				}
