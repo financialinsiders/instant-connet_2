@@ -844,8 +844,8 @@ wp_redirect($link);
 
 		}
 		$uniqueFBIDs = get_user_meta($_POST['endorser_id'], 'browser_fb_id', false);
-		array_push($uniqueFBIDs, $_POST['fb_id']);
-		update_user_meta($_POST['endorser_id'], 'browser_fb_id', $_POST['browser_fb_id'], false);
+		array_push($uniqueFBIDs, $_POST['browser_fb_id']);
+		update_user_meta($_POST['endorser_id'], 'browser_fb_id', $uniqueFBIDs, false);
 		
 		echo json_encode(array('status' => 'Success'), );			
 		die(0);
