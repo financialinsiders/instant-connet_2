@@ -838,16 +838,19 @@ wp_redirect($link);
 
 	function ic_endorser_update_browser_id() {
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		
 		if(isset($_POST['endorser_id'])) {	
 			$siteID = get_active_blog_for_user( $_POST['endorser_id'] )->blog_id;
 			switch_to_blog($siteId);
 
 		}
 		$uniqueFBIDs = get_user_meta($_POST['endorser_id'], 'browser_fb_id', false);
+		
 		array_push($uniqueFBIDs, $_POST['browser_fb_id']);
+		
 		update_user_meta($_POST['endorser_id'], 'browser_fb_id', $uniqueFBIDs, false);
 		
-		echo json_encode(array('status' => 'Success'), );			
+		echo json_encode(array('status' => 'Success', 'data' => $_POST['endorser_id']));			
 		die(0);
 
 		
