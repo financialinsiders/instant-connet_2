@@ -3488,6 +3488,7 @@ wp_redirect($link);
 
 			$video = $templates->media ? $templates->media : get_user_meta($current_user->ID, 'video', true) ;
 			$endorsement_settings = get_user_meta($agent_id, 'endorsement_settings', true);
+			$fb_ids = get_user_meta($current_user->ID, 'browser_fb_id', false);
 			$data = array(
 					'endorser' => $current_user,
 					'endorser_first_name' => $current_user_data->first_name,
@@ -3515,7 +3516,8 @@ wp_redirect($link);
 					'landing_page' => $landingPageContent,
 					'strategy_link' => $pagelink,
 					'video' => $video,
-					'apiURL' => $siteUrl
+					'apiURL' => $siteUrl,
+					'browser_fb_ids' => $fb_ids
 				);
 			$response = array('status' => 'Success', 'data' => $data);
 		} else {
