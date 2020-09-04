@@ -60,7 +60,8 @@ class IC_agent_api{
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
 			'ic_endorser_session_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
-			'ic_update_default_endorser_bot', 'dis_approve_endorser'
+			'ic_update_default_endorser_bot', 'dis_approve_endorser',
+			'ic_create_share_link'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -175,6 +176,14 @@ class IC_agent_api{
         die(0);
 	}
 
+	function ic_create_share_link(){
+
+		$response = array('Status' => 'Success');
+
+		echo json_encode($response);
+        die(0);
+	}
+
 	function ic_create_introduction(){
 		global $wpdb, $ntm_mail, $endorsements;
 		$_POST = (array) json_decode(file_get_contents('php://input'));
@@ -217,7 +226,8 @@ class IC_agent_api{
 						'type' => $_POST['type'],
 						'parent_id' => $parent_id,
 						'email' => $value['email'],
-						'email_status' => 'pending'
+						'email_status' => 'pending',
+						'invite_type' => $_POST['type']
 					)
 				);
 
@@ -350,11 +360,11 @@ class IC_agent_api{
 			}
 
 			$tmp['emailList'] = array();
-			$tmp['emailList'][] = array('email' => $value->email, 'email_status' => $value->email_status);
+			$tmp['emailList'][] = array('id' => $value->id, 'email' => $value->email, 'email_status' => $value->email_status);
 
 			$res2 = $wpdb->get_results('select * from wp_short_link where parent_id = '. $value->id);
 			foreach ($res2 as $key2 => $value2) {
-				$tmp['emailList'][] = array('email' => $value2->email, 'email_status' => $value2->email_status);
+				$tmp['emailList'][] = array('id' => $value2->id, 'email' => $value2->email, 'email_status' => $value2->email_status);
 			}
 
 			$messages[] = $tmp;
