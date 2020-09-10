@@ -288,7 +288,7 @@ class IC_agent_api{
 
 			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$wpdb->insert_id));
 		} else {
-			$response = array('Status' => 'Error', 'msg' => 'Invalid type');
+			$response = array('Status' => 'Error', 'msg' => 'Invalid type', 'agent_id' => $POST['agent_id']);
 		}
 
 		echo json_encode($response);
