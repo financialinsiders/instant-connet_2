@@ -816,6 +816,15 @@
 			  id int(11) NOT NULL AUTO_INCREMENT,
 			  link tinytext NOT NULL,
 			  params text,
+			  endorser_id int(11) NOT NULL,
+			  agent_id int(11) NOT NULL,
+			  ts datetime NOT NULL,
+			  parent_id int(11) NOT NULL,
+			  type varchar(20) NOT NULL,
+			  email varchar(250) NOT NULL,
+			  email_status varchar(20) NOT NULL,
+			  invite_type varchar(50) NOT NULL,
+			  session_id varchar(20) NOT NULL
 			  PRIMARY KEY  (id) ) ENGINE=InnoDB";
 
 			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');

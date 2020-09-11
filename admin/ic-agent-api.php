@@ -226,7 +226,8 @@ class IC_agent_api{
 						'parent_id' => $parent_id,
 						'email' => $value['email'],
 						'email_status' => 'pending',
-						'invite_type' => $_POST['type']
+						'invite_type' => $_POST['type'],
+						'session_id' => $_POST['session_id']
 					)
 				);
 
@@ -259,17 +260,6 @@ class IC_agent_api{
 					
 				}
 
-				$endorsement_settings = get_user_meta($agent_id, 'endorsement_settings', true);
-				$points = $endorsement_settings['email_point_value'] ? $endorsement_settings['email_point_value'] : 0;
-
-				if($points){
-					$type = 'Email Invitation';
-					$new_balance = $endorsements->get_endorser_points($endorser_id)['points'] + $points;
-					$data = array('points' => $points, 'agent_id' => $agent_id, 'endorser_id' => $endorser_id, 'created' => date("Y-m-d H:i:s"), 'type' => 'email_invitation', 'notes' => $type);
-					$endorsements->add_points($data);
-				}
-				
-
 				$respdata[] = $link;
 			}
 
@@ -282,7 +272,8 @@ class IC_agent_api{
 			  		'endorser_id' => $_POST['endorser_id'],
 					'agent_id' => $_POST['agent_id'],
 					'ts' => date('Y-m-d H:i:s'),
-					'type' => $_POST['type']
+					'type' => $_POST['type'],
+					'session_id' => $_POST['session_id']
 				)
 			);
 
@@ -300,10 +291,25 @@ class IC_agent_api{
 		global $wpdb;
 
 		$track_link = base64_decode(base64_decode($_GET['ref']));
-		$wpdb->update("wp_short_link", 
-			array("email_status" => 'seen'), 
-			array('id' => $track_link)
-		);
+		
+		$link = $wpdb->get_row('select * from wp_short_link where id ='.$track_link);
+
+		if($link->email_status == 'seen'){
+			$wpdb->update("wp_short_link", 
+				array("email_status" => 'seen'), 
+				array('id' => $track_link)
+			);
+
+			$endorsement_settings = get_user_meta($agent_id, 'endorsement_settings', true);
+			$points = $endorsement_settings['email_point_value'] ? $endorsement_settings['email_point_value'] : 0;
+
+			if($points){
+				$type = 'Email Invitation';
+				$new_balance = $endorsements->get_endorser_points($endorser_id)['points'] + $points;
+				$data = array('points' => $points, 'agent_id' => $agent_id, 'endorser_id' => $endorser_id, 'created' => date("Y-m-d H:i:s"), 'type' => 'email_invitation', 'notes' => $type);
+				$endorsements->add_points($data);
+			}
+		}
 
 		header('Content-Type: image/png');
 		echo base64_decode('R0lGODlhAQABAJAAAP8AAAAAACH5BAUQAAAALAAAAAABAAEAAAICBAEAOw==');
