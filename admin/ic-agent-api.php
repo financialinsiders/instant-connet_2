@@ -273,7 +273,8 @@ class IC_agent_api{
 					'agent_id' => $_POST['agent_id'],
 					'ts' => date('Y-m-d H:i:s'),
 					'type' => $_POST['type'],
-					'session_id' => $_POST['session_id']
+					'session_id' => $_POST['session_id'],
+					'invite_type' => $_POST['invite_type']
 				)
 			);
 
