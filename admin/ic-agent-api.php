@@ -60,7 +60,7 @@ class IC_agent_api{
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
 			'ic_endorser_session_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
-			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_create_share_link'
+			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -68,6 +68,9 @@ class IC_agent_api{
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
 	}
+
+	
+
 
 	function ic_get_endorser_intro(){
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
@@ -175,6 +178,7 @@ class IC_agent_api{
         die(0);
 	}
 
+	
 	function ic_create_share_link(){
 
 		$response = array('Status' => 'Success');
@@ -182,6 +186,25 @@ class IC_agent_api{
 		echo json_encode($response);
         die(0);
 	}
+
+
+	function ic_get_introduction_history() {
+		global $wpdb, $endorsements;
+		$_GET = (array) json_decode(file_get_contents('php://input'));
+		$blog_id = get_current_blog_id();
+		$agent_id = get_blog_option($blog_id, 'agent_id');
+		//switch_to_blog( $blog_id );
+		
+		$endorser_id = $_GET['endorser_id'];
+		
+		$getIntroSessions = get_user_meta($endorser_id, 'introduction_sessions', false);
+		
+		
+		$response = array('Status' => 'Success', 'data' => $getIntroSessions);
+		echo json_encode($response);
+		die(0);
+	}
+
 
 	function ic_create_introduction(){
 		global $wpdb, $ntm_mail, $endorsements;
@@ -193,7 +216,32 @@ class IC_agent_api{
 		$blog_id = get_current_blog_id();
 		$agent_id = get_blog_option($blog_id, 'agent_id');
 		$endorser_id = $_POST['endorser_id'];
+		$session_id = $_POST['session_id'];
+		
+		$getIntroSessions = get_user_meta($_POST['endorser_id'], 'introduction_sessions', true);
+		
+		if($getIntroSessions == "") {
+			update_user_meta($_POST['endorser_id'], 'introduction_sessions', array($session_id), false);
+		} else {
+		
+		
+		
+		
+		
+		
 
+			if(in_array ($session_id, $getIntroSessions)) {
+
+			} else {
+			
+				array_push($getIntroSessions, $session_id);	
+				update_user_meta($_POST['endorser_id'], 'introduction_sessions', $getIntroSessions, false);
+			
+			}
+		}
+		
+		$latestSessionData = get_user_meta($_POST['endorser_id'], 'introduction_sessions', true);
+	
 		if(isset($_POST['video_url']) && $_POST['video_url']){
 			if($_POST['extrapoint']){
 				$type = 'Extra points for video';
@@ -278,7 +326,7 @@ class IC_agent_api{
 				)
 			);
 
-			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$wpdb->insert_id));
+			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$wpdb->insert_id), 'meta' => $latestSessionData);
 		} else {
 			$response = array('Status' => 'Error', 'msg' => 'Invalid type', 'agent_id' => $POST['agent_id']);
 		}
@@ -864,7 +912,7 @@ wp_redirect($link);
 		
 		array_push($uniqueFBIDs, $_POST['browser_fb_id']);
 		
-		update_user_meta($_POST['endorser_id'], 'browser_fb_id', $uniqueFBIDs, false);
+		update_user_meta($_POST['endorser_id'], 'browser_fb_id', $uniqueFBIDs);
 		
 		echo json_encode(array('status' => 'Success', 'data' => $_POST['endorser_id']));			
 		die(0);
@@ -883,6 +931,8 @@ wp_redirect($link);
 		die(0);
 
 	}
+
+
 
 	function ic_endorser_bot($st = 1){
 
