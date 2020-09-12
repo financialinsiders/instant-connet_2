@@ -226,7 +226,7 @@ class IC_agent_api{
 						'parent_id' => $parent_id,
 						'email' => $value['email'],
 						'email_status' => 'pending',
-						'invite_type' => $_POST['type'],
+						'invite_type' => $_POST['invite_type'],
 						'session_id' => $_POST['session_id']
 					)
 				);
