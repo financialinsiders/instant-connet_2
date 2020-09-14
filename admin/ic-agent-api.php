@@ -60,7 +60,7 @@ class IC_agent_api{
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
 			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
-			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications'
+			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications', 'ic_endorser_get_notifications'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -264,6 +264,19 @@ class IC_agent_api{
 
 	}
 
+	function ic_endorser_get_notifications() {
+
+		$_POST = (array) json_decode(file_get_contents('php://input'));
+		if(isset($_POST['endorser_id'])) {
+				$emailSetting = get_user_meta($_POST['endorser_id'], 'endorser_app_email_notification', true);
+				$pushSetting = get_user_meta($_POST['endorser_id'], 'endorser_app_push_notification', true);
+				$resp = array('status'=>'success', 'email_setting' => $emailSetting, 'push_setting' => $pushSetting);
+			} else {
+				$resp = array('status'=>'fail', 'message' => 'No Endorser ID passed');
+			}
+		echo json_encode($resp);
+	}
+
 
 	function ic_endorser_set_notifications() {
 		$_POST = (array) json_decode(file_get_contents('php://input'));
@@ -432,7 +445,7 @@ class IC_agent_api{
 			}
 
 			$response = array('Status' => 'Success', 'link_data' => $respdata, 'pending_points_earned' => 50);
-			
+
 		} elseif(isset($_POST['type']) && $_POST['type']){
 			$wpdb->insert("wp_short_link", 
 				array(
