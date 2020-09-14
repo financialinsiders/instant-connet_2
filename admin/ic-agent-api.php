@@ -266,10 +266,10 @@ class IC_agent_api{
 
 	function ic_endorser_get_notifications() {
 
-		$_POST = (array) json_decode(file_get_contents('php://input'));
-		if(isset($_POST['endorser_id'])) {
-				$emailSetting = get_user_meta($_POST['endorser_id'], 'endorser_app_email_notification', true);
-				$pushSetting = get_user_meta($_POST['endorser_id'], 'endorser_app_push_notification', true);
+		$_GET = (array) json_decode(file_get_contents('php://input'));
+		if(isset($_GET['endorser_id'])) {
+				$emailSetting = get_user_meta($_GET['endorser_id'], 'endorser_app_email_notification', true);
+				$pushSetting = get_user_meta($_GET['endorser_id'], 'endorser_app_push_notification', true);
 				$resp = array('status'=>'success', 'email_setting' => $emailSetting, 'push_setting' => $pushSetting);
 			} else {
 				$resp = array('status'=>'fail', 'message' => 'No Endorser ID passed');
