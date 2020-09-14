@@ -428,9 +428,11 @@ class IC_agent_api{
 				}
 
 				$respdata[] = $link;
+
 			}
 
-			$response = array('Status' => 'Success', 'data' => $respdata);
+			$response = array('Status' => 'Success', 'link_data' => $respdata, 'pending_points_earned' => 50);
+			
 		} elseif(isset($_POST['type']) && $_POST['type']){
 			$wpdb->insert("wp_short_link", 
 				array(
