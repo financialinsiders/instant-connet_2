@@ -189,7 +189,6 @@ class IC_agent_api{
 
 
 	function ic_get_introduction_history() {
-		
 		global $wpdb, $endorsements;
 		$_GET = (array) json_decode(file_get_contents('php://input'));
 		$blog_id = get_current_blog_id();
@@ -295,7 +294,6 @@ class IC_agent_api{
 		die(0);
 	}
 
-
 	function ic_create_introduction_session() {
 		
 		$_GET = (array) json_decode(file_get_contents('php://input'));
@@ -347,17 +345,20 @@ class IC_agent_api{
 		
 		$getIntroSessions = get_user_meta($_POST['endorser_id'], 'introduction_sessions', true);
 		
-
-		if(in_array ($session_id, $getIntroSessions)) {
-
+		if($getIntroSessions == "") {
+			update_user_meta($_POST['endorser_id'], 'introduction_sessions', array($session_id), false);
 		} else {
+		
+			if(in_array ($session_id, $getIntroSessions)) {
+
+			} else {
 			
-			array_push($getIntroSessions, $session_id);	
-			update_user_meta($_POST['endorser_id'], 'introduction_sessions', $getIntroSessions, false);
+				array_push($getIntroSessions, $session_id);	
+				update_user_meta($_POST['endorser_id'], 'introduction_sessions', $getIntroSessions, false);
 			
+			}
 		}
-		
-		
+
 		$latestSessionData = get_user_meta($_POST['endorser_id'], 'introduction_sessions', true);
 	
 		if(isset($_POST['video_url']) && $_POST['video_url']){
@@ -444,7 +445,7 @@ class IC_agent_api{
 				)
 			);
 
-			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$wpdb->insert_id));
+			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$wpdb->insert_id), 'meta' => $latestSessionData);
 		} else {
 			$response = array('Status' => 'Error', 'msg' => 'Invalid type', 'agent_id' => $POST['agent_id']);
 		}
