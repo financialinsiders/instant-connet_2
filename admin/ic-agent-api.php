@@ -60,7 +60,8 @@ class IC_agent_api{
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
 			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
-			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications'
+			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications', 'ic_agent_new_message', 'ic_agent_message',
+			'ic_agent__endorser_message'
 	    );
 		
 		foreach ($functions as $key => $value) {
@@ -69,8 +70,40 @@ class IC_agent_api{
 		}
 	}
 
-	
+	function ic_agent_new_message(){
+		global $wpdb;
 
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+
+		$wpdb->insert('wp_agent_message', array(
+			'endorser_id' => $_POST['endorser_id'],
+			'agent_id' => $_POST['agent_id'],
+			'message' => $_POST['message'],
+			'video' => $_POST['video'],
+			'ts' => date('Y-m-d H:i:s'),
+		));
+
+		echo json_encode($response);
+		die(0);
+	}
+
+	function ic_agent_message(){
+		global $wpdb;
+
+		$response = $wpdb->get_results('select * from wp_agent_message where agent_id = '.$_GET['id']);
+
+		echo json_encode($response);
+		die(0);
+	}
+
+	function ic_agent__endorser_message(){
+		global $wpdb;
+
+		$response = $wpdb->get_results('select * from wp_agent_message where endorser_id = '.$_GET['id']);
+
+		echo json_encode($response);
+		die(0);
+	}
 
 	function ic_get_endorser_intro(){
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
@@ -382,23 +415,31 @@ class IC_agent_api{
 				$data['video_url'] = $_POST['video_url'];
 				$data['attention_message'] = $_POST['attention_message'];
 
-				$wpdb->insert("wp_short_link", 
-					array(
-						'link' => get_permalink($data['page_id']),
-				  		'params' => serialize($data),
-				  		'endorser_id' => $_POST['endorser_id'],
-						'agent_id' => $_POST['agent_id'],
-						'ts' => date('Y-m-d H:i:s'),
-						'type' => $_POST['type'],
-						'parent_id' => $parent_id,
-						'email' => $value['email'],
-						'email_status' => 'pending',
-						'invite_type' => $_POST['invite_type'],
-						'session_id' => $_POST['session_id']
-					)
-				);
+				$already_exist = $wpdb->get_results('select * from wp_short_link where email = "'.$value['email'].'"');
 
-				$intro_id = $wpdb->insert_id;
+				if(count($already_exist)){
+					$intro_id = $already_exist[0]->id;
+				} else {
+					$wpdb->insert("wp_short_link", 
+						array(
+							'link' => get_permalink($data['page_id']),
+					  		'params' => serialize($data),
+					  		'endorser_id' => $_POST['endorser_id'],
+							'agent_id' => $_POST['agent_id'],
+							'ts' => date('Y-m-d H:i:s'),
+							'type' => $_POST['type'],
+							'parent_id' => $parent_id,
+							'email' => $value['email'],
+							'email_status' => 'pending',
+							'invite_type' => $_POST['invite_type'],
+							'session_id' => $_POST['session_id']
+						)
+					);
+
+					$intro_id = $wpdb->insert_id;
+				}
+
+				
 
 				if($parent_id == 0){
 					$parent_id = $intro_id;
@@ -463,19 +504,27 @@ class IC_agent_api{
 		$link = $wpdb->get_row('select * from wp_short_link where id ='.$track_link);
 
 		if($link->email_status == 'seen'){
+			
+			$already_exist = $wpdb->get_results('select * from wp_short_link where email_status = "seen" and email = "'.$link->email.'"');
+
+			$session_exist = $wpdb->get_results('select * from wp_short_link where email_status = "seen" and session_id = "'.$link->session_id.'"');
+
+
 			$wpdb->update("wp_short_link", 
 				array("email_status" => 'seen'), 
 				array('id' => $track_link)
 			);
 
-			$endorsement_settings = get_user_meta($agent_id, 'endorsement_settings', true);
-			$points = $endorsement_settings['email_point_value'] ? $endorsement_settings['email_point_value'] : 0;
+			if(count($already_exist) == 0 && count($session_exist) == 0){
+				$endorsement_settings = get_user_meta($agent_id, 'endorsement_settings', true);
+				$points = $endorsement_settings['email_point_value'] ? $endorsement_settings['email_point_value'] : 0;
 
-			if($points){
-				$type = 'Email Invitation';
-				$new_balance = $endorsements->get_endorser_points($endorser_id)['points'] + $points;
-				$data = array('points' => $points, 'agent_id' => $agent_id, 'endorser_id' => $endorser_id, 'created' => date("Y-m-d H:i:s"), 'type' => 'email_invitation', 'notes' => $type);
-				$endorsements->add_points($data);
+				if($points){
+					$type = 'Email Invitation';
+					$new_balance = $endorsements->get_endorser_points($endorser_id)['points'] + $points;
+					$data = array('points' => $points, 'agent_id' => $agent_id, 'endorser_id' => $endorser_id, 'created' => date("Y-m-d H:i:s"), 'type' => 'email_invitation', 'notes' => $type);
+					$endorsements->add_points($data);
+				}
 			}
 		}
 
@@ -2542,6 +2591,39 @@ wp_redirect($link);
 					'output_data' => serialize($op)
 				)
 		);
+	}
+
+	function track_api_new($api, $blog_id, $user_id, $user_type, $ip=array(), $op=array()){
+		global $wpdb;
+
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+
+		if(isset($_POST['api'])){
+			$api = $_POST['api'];
+			$user_id = $_POST['user_id'];
+			$blog_id = get_active_blog_for_user( $_POST['user_id'] )->blog_id;
+			$user_type = $_POST['user_type'];
+			$notes = $_POST['notes'];
+		}
+
+		$wpdb->insert('tracking_log', 
+				array(
+					'api' => $api,
+					'blog_id' => $blog_id,
+					'user_id' => $user_id,
+					'user_type' => $user_type,
+					'notes' => $notes,
+					'track_time' => date('Y-m-d H:i:s'),
+					'input_data' => serialize($ip),
+					'output_data' => serialize($op)
+				)
+		);
+
+		if(isset($_POST['api'])){
+			$response = array('status' => 'Success');
+			echo json_encode($response);
+			die(0);	
+		}
 	}
 
 	function ic_track_invitation_open(){
