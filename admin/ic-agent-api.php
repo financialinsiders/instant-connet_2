@@ -432,6 +432,7 @@ class IC_agent_api{
 
 				if(count($already_exist)){
 					$intro_id = $already_exist[0]->id;
+					$this->track_api_new('resend_introduction', $blog_id, $intro_id, 'intro');
 				} else {
 					$wpdb->insert("wp_short_link", 
 						array(
@@ -450,6 +451,8 @@ class IC_agent_api{
 					);
 
 					$intro_id = $wpdb->insert_id;
+
+					$this->track_api_new('new_introduction', $blog_id, $intro_id, 'intro');
 				}
 
 				
@@ -501,6 +504,8 @@ class IC_agent_api{
 				)
 			);
 
+			$this->track_api_new('new_introduction', $blog_id, $intro_id, 'intro');
+
 			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$wpdb->insert_id), 'meta' => $latestSessionData);
 		} else {
 			$response = array('Status' => 'Error', 'msg' => 'Invalid type', 'agent_id' => $POST['agent_id']);
@@ -529,6 +534,10 @@ class IC_agent_api{
 				array("email_status" => 'seen'), 
 				array('id' => $track_link)
 			);
+
+			$blog_id = get_current_blog_id();
+
+			$this->track_api_new('seen_introduction', $blog_id, $track_link, 'intro');
 
 			if(count($already_exist) == 0 && count($session_exist) == 0){
 				$endorsement_settings = get_user_meta($agent_id, 'endorsement_settings', true);
@@ -4164,6 +4173,14 @@ wp_redirect($link);
 			$msg = 'Lead created successfully';
 			$lead_id = $wpdb->insert_id;
 
+
+			$email_check = $wpdb->get_results('select * from wp_short_link where email = "'.$lead['email'].'"');
+
+			if(count($email_check)){
+				$blog_id = get_current_blog_id();
+
+				$this->track_api_new('lead_created', $blog_id, $email_check[0]->id, 'intro');
+			}
 		}
 
 
@@ -4180,6 +4197,12 @@ wp_redirect($link);
 					$admin_id = $appointmentMeeting['admin_id'];
 					$user_id = $appointmentMeeting['user_id'];
 
+					if(count($email_check)){
+						$blog_id = get_current_blog_id();
+
+						$this->track_api_new('appointment_scheduled', $blog_id, $email_check[0]->id, 'intro');
+					}
+
 					break;
 
 					case "instant":
@@ -4187,6 +4210,12 @@ wp_redirect($link);
 					
 					$admin_id = $instantMeeting['admin_id'];
 					$user_id = $instantMeeting['user_id'];
+
+					if(count($email_check)){
+						$blog_id = get_current_blog_id();
+
+						$this->track_api_new('instant_meeting', $blog_id, $email_check[0]->id, 'intro');
+					}
 
 					break;
 
