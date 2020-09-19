@@ -932,7 +932,7 @@ wp_redirect($link);
 		$id = wp_insert_post($args);
 
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailInvite', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
 
 		foreach($arr as $a){
 			update_post_meta($id, $a, $_POST[$a]);
@@ -959,7 +959,7 @@ wp_redirect($link);
 		$id = wp_insert_post($args);
 
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailInvite', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
 
 		foreach($arr as $a){
 			update_post_meta($id, $a, $botData[$a]);
@@ -996,7 +996,7 @@ wp_redirect($link);
 
 		$id = wp_update_post($args);
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailInvite', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
 
 		foreach($arr as $a){
 			update_post_meta($_POST['ID'], $a, $_POST[$a]);
@@ -1193,7 +1193,7 @@ wp_redirect($link);
 			'link' => get_permalink($value->ID)
 		);
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailInvite', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
 
 		foreach($arr as $a){
 			$chat[$a] = get_post_meta($value->ID, $a, true);
