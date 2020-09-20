@@ -59,10 +59,7 @@ class IC_agent_api{
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
-			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot',
-			'ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications', 'ic_endorser_get_notifications', 'ic_agent_new_message', 'ic_agent_message',
-			'ic_agent__endorser_message'
-	    );
+			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
@@ -71,17 +68,26 @@ class IC_agent_api{
 	}
 
 	function ic_agent_new_message(){
+		
+		echo "testing";
+		die(0);
+
 		global $wpdb;
 
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
-
-		$wpdb->insert('wp_agent_message', array(
-			'endorser_id' => $_POST['endorser_id'],
-			'agent_id' => $_POST['agent_id'],
-			'message' => $_POST['message'],
-			'video' => $_POST['video'],
-			'ts' => date('Y-m-d H:i:s'),
-		));
+		if(isset($_POST['endorser_id'])) {
+		
+			$wpdb->insert('wp_agent_message', array(
+				'endorser_id' => $_POST['endorser_id'],
+				'agent_id' => $_POST['agent_id'],
+				'message' => $_POST['message'],
+				'video' => $_POST['video'],
+				'ts' => date('Y-m-d H:i:s'),
+			));
+			$response = array('status' => 'Success' );
+		} else {
+			$response = array('status' => 'failed');
+		}
 
 		echo json_encode($response);
 		die(0);
@@ -308,6 +314,7 @@ class IC_agent_api{
 				$resp = array('status'=>'fail', 'message' => 'No Endorser ID passed');
 			}
 		echo json_encode($resp);
+		die(0);
 	}
 
 
@@ -932,7 +939,7 @@ wp_redirect($link);
 		$id = wp_insert_post($args);
 
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTempData', 'appearance');
 
 		foreach($arr as $a){
 			update_post_meta($id, $a, $_POST[$a]);
@@ -996,7 +1003,7 @@ wp_redirect($link);
 
 		$id = wp_update_post($args);
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTempData', 'appearance');
 
 		foreach($arr as $a){
 			update_post_meta($_POST['ID'], $a, $_POST[$a]);
@@ -1168,6 +1175,8 @@ wp_redirect($link);
 		}
 	}
 
+	
+
 	function ic_retrieve_chat_bot($botId, $fl = 0){
 		global $wpdb;
 
@@ -1193,7 +1202,7 @@ wp_redirect($link);
 			'link' => get_permalink($value->ID)
 		);
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTempData', 'appearance');
 
 		foreach($arr as $a){
 			$chat[$a] = get_post_meta($value->ID, $a, true);
@@ -1220,6 +1229,27 @@ wp_redirect($link);
 			echo json_encode($data);
 			die(0);
 		}
+	}
+
+	function ic_retreive_bot_email_template() {
+	
+		$_GET = (array) json_decode(file_get_contents('php://input'));
+		
+
+		if(isset($_GET['botID'])) {
+
+			$botID = $_GET['botID']; 
+			
+			$emailTemplate = get_post_meta($botID, 'emailTempData', true);
+
+			$response = array('status'=> 'success', 'emailTemplate' =>  $emailTemplate);
+
+		} else {
+			$response = array('status' => 'failed', 'message' => 'No Bot Id');
+		}
+		
+		echo json_encode($response);
+		die(0);
 	}
 
 	function ic_retrieve_chat_list(){
