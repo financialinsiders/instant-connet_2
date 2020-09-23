@@ -141,6 +141,10 @@ Instant Connect UI
           top: 0 !important;
           width: 45% !important;
       }*/
+      .screenshare-container .OT_publisher, .screenshare-container .OT_subscriber{
+        width: 100% !important;
+        height: 100% !important;
+      }
   </style>
 
 
