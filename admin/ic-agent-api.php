@@ -257,11 +257,11 @@ class IC_agent_api{
 			foreach($sessionEmails as $value) {
 				if(!$value->email == "") {
 					$sessionEmailParams = unserialize($value->params);
-					$sessionEmailArray[] = array('link_id' => $value->id ,'email_address'=> $value->email, 'first_name' => $sessionEmailParams['first_name'], 'last_name' => $sessionEmailParams['last_name'], 'email_status' => $value->email_status);
+					$sessionEmailArray[] = array('link_id' => $value->id ,'email_address'=> $value->email, 'first_name' => $sessionEmailParams['first_name'], 'last_name' => $sessionEmailParams['last_name'], 'email_status' => $value->email_status, 'email_time_stamp'=>$value->ts);
 				}	
 			} 
 			if(!$sessionParams['attention_message'] == "") {
-				$sessionList[] = array('session_id' => $value->session_id, 'video_message' => $sessionParams['video_url'], 'message' => $sessionParams['attention_message'], 'contacts_emailed' => $sessionEmailArray);
+				$sessionList[] = array('session_id' => $value->session_id, 'video_message' => $sessionParams['video_url'], 'message' => $sessionParams['attention_message'], 'contacts_emailed' => $sessionEmailArray, 'time_stamp'=> $value->ts );
 			//echo json_encode($sessionInfo);
 			}
 		}
@@ -498,6 +498,7 @@ class IC_agent_api{
 			$response = array('Status' => 'Success', 'link_data' => $respdata, 'pending_points_earned' => 50);
 
 		} elseif(isset($_POST['type']) && $_POST['type']){
+			
 			$wpdb->insert("wp_short_link", 
 				array(
 					'link' => get_permalink($data['bot_id']),
@@ -511,13 +512,16 @@ class IC_agent_api{
 				)
 			);
 
-			$this->track_api_new('new_introduction', $blog_id, $intro_id, 'intro');
+			//echo json_encode($wpdb->last_query);
+			//echo json_encode($wpdb->insert_id);
+			$insertID = $wpdb->insert_id;
+			$this->track_api_new('new_introduction', $blog_id, $insertID, 'intro');
 
-			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$wpdb->insert_id), 'meta' => $latestSessionData);
+			$response = array('Status' => 'Success', 'data' => site_url('introduction.php?id='.$insertID));
 		} else {
 			$response = array('Status' => 'Error', 'msg' => 'Invalid type', 'agent_id' => $POST['agent_id']);
 		}
-
+		
 		echo json_encode($response);
         die(0);
 	}
@@ -2524,6 +2528,7 @@ wp_redirect($link);
 
 
 	function ic_endorser_profile(){
+
 		global $wpdb;
 
 		$blog_id = get_active_blog_for_user( $_GET['id'] )->blog_id;
@@ -2544,6 +2549,9 @@ wp_redirect($link);
 
 		$leads = $wpdb->get_results("select * from wp_leads where endorser_id = ".$_GET['id']);
 
+		$intro_video_points = get_user_meta($_GET['id'], 'intro_video_points', true);
+		$intro_email_points = get_user_meta($_GET['id'], 'intro_points', true);
+
 		$data = array(
 			'total_points' => $total_points->points ? $total_points->points : 0,
 			'redeem_points' => $redeem_points->points ? $redeem_points->points : 0,
@@ -2552,7 +2560,9 @@ wp_redirect($link);
 			'invitation_clicked' => $clicked->count ? $clicked->count : 0,
 			'fb_invitation' => $fb_invitation ? $fb_invitation : 0,
 			'tw_invitation' => $tw_invitation ? $tw_invitation : 0,
-			'leads' => $leads
+			'leads' => $leads,
+			'intro_video_points' => $intro_video_points,
+			'intro_email_points' => $intro_email_points
 		);
 
 		$response = array('status' => 'Success', 'data' => $data);
@@ -5240,7 +5250,10 @@ wp_redirect($link);
 				update_user_meta($user_id, 'video', $user['video']);
 				update_user_meta($user_id, 'landingPageContent', $user['landingPageContent']);
 				update_user_meta($user_id, 'have_intro_points', $_POST['have_intro_points']);
+
 				update_user_meta($user_id, 'intro_points', $_POST['intro_points']);
+				update_user_meta($user_id, 'intro_video_points', $_POST['intro_video_points']);
+				
 				
 				if(isset($user['password'])) {
 					update_user_meta($user_id, 'issuePoints', $user['issue_points'] ? 1 : 0);
@@ -5600,6 +5613,7 @@ wp_redirect($link);
 		update_user_meta($user_id, 'landingPageContent', $_POST['landingPageContent']);
 		update_user_meta($user_id, 'have_intro_points', $_POST['have_intro_points']);
 		update_user_meta($user_id, 'intro_points', $_POST['intro_points']);
+		update_user_meta($user_id, 'intro_video_points', $_POST['intro_video_points']);
 		$response = array('status' => 'Success', 'msg' => 'Endorser approved successfully');
 		
 		echo json_encode($response);
