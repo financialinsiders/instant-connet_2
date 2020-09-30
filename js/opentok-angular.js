@@ -67,7 +67,7 @@ ng.module('opentok', [])
               });
             },
             streamDestroyed: function(event) {
-              console.log("sessionConnected");
+              console.log("streamDestroyed");
               $rootScope.$apply(function() {
                 if (event.stream.videoType === 'screen') {
                   OTSession.screenshare.splice(OTSession.streams.indexOf(event.stream), 1);
@@ -131,7 +131,7 @@ ng.module('opentok', [])
             // Screen sharing is available. Publish the screen.
             // Create an element, but do not display it in the HTML DOM:
             var screenContainerElement = document.createElement('div');
-            //$('#screens-container').append(screenContainerElement);
+            
             $rootScope.screenSharingPublisher = OT.initPublisher(screenContainerElement,
               { videoSource : 'screen' },
               function(error) {
@@ -148,9 +148,18 @@ ng.module('opentok', [])
                 }
               });
 
+            $("body").on("click", ".screenshare-div button", function(){
+              $rootScope.screenSharingPublisher.destroy();
+              $rootScope.$broadcast('stopsharing');
+            });
+
             $rootScope.screenSharingPublisher.on({
               streamCreated: function(e) {
+                $('#screens-container').html(screenContainerElement);
                 OTSession.session.emit('streamCreated', e);
+              },
+              streamDestroyed: function(e) {
+                console.log(e);
               }
             });
 

@@ -345,6 +345,10 @@ if (scope.$last === true) {
 	$scope.whiteboard_control = $scope.is_admin ? true : false;
 	$scope.active_whiteboard_user = {};
 
+	$rootScope.$on('stopsharing', function(event, data){
+		$scope.remove_tab(0);
+	});
+
 	$rootScope.$on('draw_status', function(event, data){
 		if(!$scope.is_admin || $scope.data2.id == data.user.id) return;
 

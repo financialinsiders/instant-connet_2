@@ -142,11 +142,21 @@
             props="{videoSource: 'screen'}">
           </ot-screenshare>
         </ot-layout> -->
-        <div ng-if="is_admin !! full_control" style="font-size: 40px;margin-top: 200px;text-align: center;">Your screen in sharing</div>
+        <div ng-if="is_admin || full_control" class="screenshare-div" ng-init="preview=true;">
+          <div ng-show="preview" id="screens-container"></div>
+          <h6>You are sharing your screen</h6>
+          <p>When you shared your screen, your attendees will see your shared screen in real time</p>
+          <div>
+            <button class="btn btn-primary">End Sharing</button>
+            <label style="vertical-align: 5px;margin-left: 30px;" class="switch">
+              <input ng-model="preview" type="checkbox">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
     </div>
      <div class="pane-footer whiteboard-tools col-xs-12">
-        <div class="col-sm-3 no-pad"> 
-          <div ng-click="remove_tab(tab.index);" class="clos-pre">Close <i class="close-svg"></i></div>
+        <div class="col-sm-3 no-pad">
         </div>
      </div>
 </div>
