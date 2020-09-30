@@ -145,6 +145,81 @@ Instant Connect UI
         width: 100% !important;
         height: 100% !important;
       }
+       .screenshare-container .screenshare-div{
+            width: 300px;
+            margin: 0 auto;
+            margin-top: 100px;
+            text-align: center;
+        }
+      .screenshare-container .screenshare-div .OT_publisher{
+        width: 263px !important;
+        height: 148px !important;
+        overflow: hidden;
+        border-radius: 10px;
+        margin: 0 auto;
+    }
+    .screenshare-container h6{
+      font-size: 24px;
+    }
+    .switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
   </style>
 
 
@@ -431,7 +506,7 @@ Instant Connect UI
  
 
     <div class="tab-content clearfix pos-relative">
-      <ot-whiteboard ng-hide="current_tab == -1 || tabs[current_tab].type == 'youtube'" ng-class="{presentation_thumb_active: current_tab != -1 && tabs[current_tab].type == 'presentation', whiteboard_thumb_active: current_tab != -1 && tabs[current_tab].type == 'whiteboard'}" width="700" height="420" ></ot-whiteboard>
+      <ot-whiteboard ng-hide="current_tab == -1 || tabs[current_tab].type == 'youtube' || tabs[current_tab].type == 'screenshare'" ng-class="{presentation_thumb_active: current_tab != -1 && tabs[current_tab].type == 'presentation', whiteboard_thumb_active: current_tab != -1 && tabs[current_tab].type == 'whiteboard'}" width="700" height="420" ></ot-whiteboard>
 
       <div class="tab-pane active clearfix" ng-if="current_tab == -1" ng-show="(is_admin && !user_have_admin_control()) || full_control">
         <div class="col-xs-12 no-pad meeting-pane">
