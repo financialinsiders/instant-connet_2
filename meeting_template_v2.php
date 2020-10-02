@@ -220,6 +220,20 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+.video-container-agent.video-container ot-publisher {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 10px;
+}
+@media screen and (max-width: 600px) {
+  .test_link{
+    display: none !important;
+  }
+  body{
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+  }
+}
   </style>
 
 
@@ -258,7 +272,7 @@ input:checked + .slider:before {
           <li ng-show="show_video" ng-click="show_video=false;send_noti({type:'show_video', data:show_video})"><a>Disable video</a></li>
           <li ng-hide="show_video" ng-click="show_video=true;send_noti({type:'show_video', data:show_video})"><a>Enable video</a></li>
           <?php if(isset($_GET['dev'])){?>
-            <li><a target="_blank" href="?user&sessionId=<?= $sessionId?>&token=<?= $token?>">Test user link</a></li>
+            <li class="test_link"><a target="_blank" href="?user&sessionId=<?= $sessionId?>&token=<?= $token?>">Test user link</a></li>
           <?php }?>
           <li class="dropdown messages-menu">
             <!-- Menu toggle button -->
@@ -334,7 +348,7 @@ input:checked + .slider:before {
           <img src="<?= $profile_image ? $profile_image : plugin_dir_url(__FILE__).'dist/v2/img/neil-avatar.jpg'; ?>" class="img-circle" alt="User Image">
         </div>
         <div class="pull-left info">
-          <p>Neil Thomas</p>
+          <p><?= $agent_name?></p>
           <!-- Status -->
           <a href="#"><i class="fa fa-circle text-success"></i>In meeting</a>
 
@@ -349,7 +363,7 @@ input:checked + .slider:before {
         <!-- Optionally, you can add icons to the links -->
         <li><a href="#" data-toggle="modal" data-target="#presentationsModal"><i class="fa fa-line-chart" aria-hidden="true"></i> <span>Presentations</span></a></li>
         <li><a href="#" data-toggle="modal" data-target="#youtubeModal"><i class="fa fa-youtube-play"></i> <span>Videos</span></a></li>
-        
+        <li ng-click="add_tab('screenshare', 'Screen Share');"><a href="#"><i class="fa fa-television"></i> <span>Screen Share</span></a></li>
        
         <li><a href="#"><i class="fa fa-question-circle"></i> <span>Help</span></a></li>
       </ul>
@@ -363,7 +377,7 @@ input:checked + .slider:before {
     <!-- Content Header (Page header) -->
     
 
-
+    <?php $agent_name = get_user_meta($agent_id, 'first_name', true).' '.get_user_meta($agent_id, 'last_name', true)?>
     <!-- Main content -->
     <section class="content">
 
@@ -380,20 +394,20 @@ input:checked + .slider:before {
                 </ot-subscriber>
               </ot-layout>
               </div>
-              <div class="agent-name hide">Agent Name</div>
+              <div class="agent-name"><?= $agent_name?></div>
             </div>
          
         </div>
 
         <div ng-if="is_admin" class="video-container agent video-container-agent">
             <div class="video-agent">
-              <img src="<?= plugin_dir_url(__FILE__); ?>dist/v2/img/agent-video-mock-up.jpg" class="img-responsive"/>
+              <img src="<?= $profile_image ? $profile_image : plugin_dir_url(__FILE__); ?>dist/v2/img/agent-video-mock-up.jpg" class="img-responsive"/>
               <ot-layout ng-if="(is_admin && show_video) || video_control" props="{animate:true}">
                 <ot-publisher id="publisher" 
                   props="{style: {nameDisplayMode: 'on'}, resolution: '640x480', frameRate: 30, name: data2.name}">
                 </ot-publisher>
               </ot-layout>
-              <div class="agent-name hide">Agent Name <span class="designations">C.F.C</span></div>
+              <div class="agent-name"><?= $agent_name?> <span class="designations">C.F.C</span></div>
             </div>
         </div> 
 

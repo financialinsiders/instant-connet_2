@@ -255,13 +255,18 @@ if (scope.$last === true) {
 		                    }
 
 		                    $("toolbar-options").addClass("hidden");
+		                    $(".pencil").trigger("click");
 		              }
 		        );
 	        }
-	        
+
 	        if($(".range-slider").length)
 	        {
 	        	$(".range-slider img").click(function(){
+		            $(".range").toggle();
+		        });
+
+		        $(".range-slider input").change(function(){
 		            $(".range").toggle();
 		        });
 	        }
@@ -465,7 +470,7 @@ if (scope.$last === true) {
 	$scope.publisher = OTSession.publishers;
 
 	$scope.initiate_screen_sharing = function(){
-		if(!$scope.is_admin && !$scope.full_control)
+		if(!(($scope.is_admin && !$scope.user_have_admin_control()) || $scope.full_control))
 			return;
 		
 		OTSession.initiate_screenshring();
