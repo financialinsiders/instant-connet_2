@@ -59,13 +59,46 @@ class IC_agent_api{
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
-			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message');
+			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message', 'ic_update_agent_profile', 'ic_get_agent_profile');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
 	}
+
+	function ic_update_agent_profile() {
+
+		$user = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+
+		$user_id = $user['agent_id'];
+		unset($user['agent_id']);
+
+		foreach ($user as $key => $value) {
+			update_user_meta($user_id, $key, $value);
+		}
+
+		$response = array('status' => 'Success', 'msg' => 'Agent Profile Updated');
+		echo json_encode($response);
+		die(0);
+	}
+
+	function ic_get_agent_profile() {
+
+		$_GET = (array) json_decode(file_get_contents('php://input'));
+		if(isset($_GET['agent_id'])) {
+				$agent_profile_image = get_user_meta($_GET['agent_id'], 'agent_profile_image', true);
+				$agent_credentials = get_user_meta($_GET['agent_id'], 'agent_credentials', true);
+				$agent_tag = get_user_meta($_GET['agent_id'], 'agent_tag', true);
+				$resp = array('status'=>'success', 'agent_profile_image' => $agent_profile_image, 'agent_credentials' => $agent_credentials, 'agent_tag' => $agent_tag );
+			} else {
+				$resp = array('status'=>'fail', 'message' => 'No Agent ID Passed');
+			}
+		echo json_encode($resp);
+		die(0);
+
+	}
+
 
 	function ic_agent_new_message(){
 		
@@ -5259,11 +5292,11 @@ wp_redirect($link);
 					update_user_meta($user_id, 'issuePoints', $user['issue_points'] ? 1 : 0);
 				}
 				if( isset($user['video']) ){
-					$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass'], $user['video']);
+					//$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass'], $user['video']);
 				} else {
-					$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass']);
+				//	$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass']);
 				}
-				$ntm_mail->send_notification_mail($user_id);
+				//$ntm_mail->send_notification_mail($user_id);
 
 				$response = array('status' => 'Success', 'data' => $user_id, 'msg' => 'Endorser created successfully');
 			}
