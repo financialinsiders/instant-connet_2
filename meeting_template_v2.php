@@ -144,6 +144,7 @@ Instant Connect UI
       .screenshare-container .OT_publisher, .screenshare-container .OT_subscriber{
         width: 100% !important;
         height: 100% !important;
+        left: 0 !important;
       }
        .screenshare-container .screenshare-div{
             width: 300px;
@@ -224,6 +225,11 @@ input:checked + .slider:before {
     width: 100% !important;
     height: 100% !important;
     border-radius: 10px;
+}
+.instant-connect .video-chat .video-agent{
+  width: 100%;
+    background: #000;
+    height: 200px;
 }
 @media screen and (max-width: 600px) {
   .test_link{
@@ -413,7 +419,6 @@ input:checked + .slider:before {
 
         <div ng-if="streams.length == 1 && is_admin" class="video-container agent user-video-single-container">
             <div class="video-agent">
-              <img src="<?= plugin_dir_url(__FILE__); ?>dist/v2/img/agent-video-mock-up.jpg" class="img-responsive"/>
               <ot-layout props="{animate:true}">
                 <ot-subscriber ng-repeat="stream in streams" data-val="{{stream.streamId}}"
                   stream="stream" 
@@ -437,7 +442,6 @@ input:checked + .slider:before {
 
         <div ng-if="(userstreams.length || video_control) && !is_admin" ng-class="{'video-container agent user-video-single-container': ((userstreams.length==0 && video_control) || (!video_control && userstreams.length==1)), 'user-video-multiple-container': !((userstreams.length==0 && video_control) || (!video_control && userstreams.length==1)), two_streams:userstreams.length == 2, more_than_two_streams:userstreams.length > 2}">
             <div ng-if="video_control" ng-class="{'video-agent': ((userstreams.length==0 && video_control) || (!video_control && userstreams.length==1)), 'col-xs-6 video-container': !((userstreams.length==0 && video_control) || (!video_control && userstreams.length==1))}" data-pos="{{stream.vposition}}">
-              <img ng-if="((userstreams.length==0 && video_control) || (!video_control && userstreams.length==1))" src="<?= plugin_dir_url(__FILE__); ?>dist/v2/img/agent-video-mock-up.jpg" class="img-responsive"/>
               <ot-layout  props="{animate:true}">
                 <ot-publisher id="publisher" 
                   props="{style: {nameDisplayMode: 'on'}, resolution: '640x480', frameRate: 30, name: data2.name}">
@@ -527,7 +531,7 @@ input:checked + .slider:before {
             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
               <ul class="meet-icon">
                 <li class="presen-img"><a href="#" data-toggle="modal" data-target="#presentationsModal"></a></li>
-                <li ng-show="isChrome" class="screen-share">
+                <li class="screen-share">
                   <a ng-hide="tab_type_length('screenshare');" ng-click="add_tab('screenshare', 'Screen Share');" href="#"></a>
                   <a ng-click="show_msg('Screenshare already opened', 'info');" ng-show="tab_type_length('screenshare');" href="#"></a>
                 </li>

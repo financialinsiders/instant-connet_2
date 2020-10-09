@@ -2002,7 +2002,7 @@ wp_redirect($link);
 				{
 					
 					$errorResponse = array('status' => 'Fail', 'msg' =>  $e->getMessage());
-					json_encode($errorResponse);
+					echo json_encode($errorResponse);
 					die(0);
 
 				}
