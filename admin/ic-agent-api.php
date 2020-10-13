@@ -85,7 +85,7 @@ class IC_agent_api{
 
 	function ic_get_agent_profile() {
 
-		$_GET = (array) json_decode(file_get_contents('php://input'));
+		//$_GET = (array) json_decode(file_get_contents('php://input'));
 		if(isset($_GET['agent_id'])) {
 				$agent_profile_image = get_user_meta($_GET['agent_id'], 'agent_profile_image', true);
 				$agent_credentials = get_user_meta($_GET['agent_id'], 'agent_credentials', true);
@@ -1003,7 +1003,7 @@ wp_redirect($link);
 		$id = wp_insert_post($args);
 
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTemplate', 'appearance','socialDesc', 'socialImage', 'socialTitle');
 
 		foreach($arr as $a){
 			update_post_meta($id, $a, $botData[$a]);
@@ -1040,7 +1040,7 @@ wp_redirect($link);
 
 		$id = wp_update_post($args);
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTempData', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTempData', 'appearance', 'socialDesc', 'socialImage', 'socialTitle');
 
 		foreach($arr as $a){
 			update_post_meta($_POST['ID'], $a, $_POST[$a]);
@@ -1222,10 +1222,7 @@ wp_redirect($link);
 			switch_to_blog( $siteID );
 		}
 
-		if(isset($_GET['agent_id'])) {		
-			$siteID = get_active_blog_for_user( $_GET['agent_id'] )->blog_id;
-			switch_to_blog( $siteID );
-		}
+		
 		
 		$botId = $fl == 0 ? $_GET['chat'] : $botId;
 
@@ -1239,7 +1236,7 @@ wp_redirect($link);
 			'link' => get_permalink($value->ID)
 		);
 
-		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTempData', 'appearance');
+		$arr = array('keywords', 'chat_category', 'avatarImage', 'chat_type', 'fbText', 'fb_image', 'twText', 'tw_image', 'piText', 'pi_image', 'liText', 'li_image', 'inviteContent', 'backgroundImage', 'fullscreen', 'emailTempData', 'appearance','socialDesc', 'socialImage', 'socialTitle');
 
 		foreach($arr as $a){
 			$chat[$a] = get_post_meta($value->ID, $a, true);
@@ -4414,7 +4411,7 @@ wp_redirect($link);
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
 		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));
 		
-		$response = array('admin_id' => $admin_id, 'user_id' => $user_id, 'main_id' => $meeting_id);
+		$response = array('admin_id' => $admin_id, 'user_id' => $user_id, 'meeting_id' => $meeting_id);
 		
 		if(isset($_POST['agent_id'])){
 			echo json_encode($response);

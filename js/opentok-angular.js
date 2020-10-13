@@ -155,7 +155,8 @@ ng.module('opentok', [])
 
             $rootScope.screenSharingPublisher.on({
               streamCreated: function(e) {
-                $('#screens-container').html(screenContainerElement);
+               
+               $('#screens-container').html(screenContainerElement);
                 OTSession.session.emit('streamCreated', e);
               },
               streamDestroyed: function(e) {
