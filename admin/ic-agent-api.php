@@ -72,13 +72,13 @@ class IC_agent_api{
 
 		$user_info = get_userdata($user_id);
 
-		if(isset($_POST['id'])){
+		if(isset($_POST['agent_id'])){
 
-			$x = wp_check_password( $_POST['old_password'], $user->user_pass, $_POST['id'] );
+			$x = wp_check_password( $_POST['old_password'], $user->user_pass, $_POST['agent_id'] );
 
 		    if($x)
 		    {
-				wp_set_password( $_POST['password'], $_POST['id'] );
+				wp_set_password( $_POST['new_password'], $_POST['agent_id'] );
 				$response = array('status' => 'Success');
 			} else {
 				$response = array('status' => 'Error', 'msg' => 'Invalid old password');
@@ -2353,7 +2353,7 @@ wp_redirect($link);
 		$nres = array();
 		foreach ($res as $key => $value) {
 			$value = (array)$value;
-			$value['notes'] = $value['amount'] < 0 ? array('description' => $value['notes']) : unserialize($value['notes']);
+			//$value['notes'] = $value['amount'] < 0 ? array('description' => $value['notes']) : unserialize($value['notes']);
 			$nres[] = $value;
 		}
 
