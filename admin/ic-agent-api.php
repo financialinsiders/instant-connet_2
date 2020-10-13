@@ -59,12 +59,36 @@ class IC_agent_api{
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
-			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message', 'ic_update_agent_profile', 'ic_get_agent_profile');
+			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message', 'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
+	}
+
+	function ic_change_password(){
+		$_POST = (array) json_decode(file_get_contents('php://input'));
+
+		$user_info = get_userdata($user_id);
+
+		if(isset($_POST['agent_id'])){
+
+			$x = wp_check_password( $_POST['old_password'], $user->user_pass, $_POST['agent_id'] );
+
+		    if($x)
+		    {
+				wp_set_password( $_POST['new_password'], $_POST['agent_id'] );
+				$response = array('status' => 'Success');
+			} else {
+				$response = array('status' => 'Error', 'msg' => 'Invalid old password');
+			}
+		} else {
+			$response = array('status' => 'Error', 'msg' => 'Invalid data');
+		}
+
+		echo json_encode($response);
+		die(0);
 	}
 
 	function ic_update_agent_profile() {
@@ -87,10 +111,8 @@ class IC_agent_api{
 
 		//$_GET = (array) json_decode(file_get_contents('php://input'));
 		if(isset($_GET['agent_id'])) {
-				$agent_profile_image = get_user_meta($_GET['agent_id'], 'agent_profile_image', true);
-				$agent_credentials = get_user_meta($_GET['agent_id'], 'agent_credentials', true);
-				$agent_tag = get_user_meta($_GET['agent_id'], 'agent_tag', true);
-				$resp = array('status'=>'success', 'agent_profile_image' => $agent_profile_image, 'agent_credentials' => $agent_credentials, 'agent_tag' => $agent_tag );
+				$resp = get_user_meta($_GET['agent_id']);
+				$resp['status'] = 'Success';
 			} else {
 				$resp = array('status'=>'fail', 'message' => 'No Agent ID Passed');
 			}
@@ -1999,7 +2021,7 @@ wp_redirect($link);
 				{
 					
 					$errorResponse = array('status' => 'Fail', 'msg' =>  $e->getMessage());
-					json_encode($errorResponse);
+					echo json_encode($errorResponse);
 					die(0);
 
 				}
@@ -2328,7 +2350,7 @@ wp_redirect($link);
 		$nres = array();
 		foreach ($res as $key => $value) {
 			$value = (array)$value;
-			$value['notes'] = $value['amount'] < 0 ? array('description' => $value['notes']) : unserialize($value['notes']);
+			//$value['notes'] = $value['amount'] < 0 ? array('description' => $value['notes']) : unserialize($value['notes']);
 			$nres[] = $value;
 		}
 

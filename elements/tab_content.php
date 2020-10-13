@@ -32,7 +32,7 @@
         </ul>
       </li>
       <li class="range-slider"><img src="<?= IC_PLUGIN_URL; ?>dist/v2/img/bar.png">
-      <div class="range"><input ng-change="send_noti({type:'lineWidth', val: lineWidth});" ng-model="$parent.lineWidth" type="range" min="0" max="10" orient="vertical" /></div>
+      <div class="range"><input ng-change="send_noti({type:'lineWidth', val: lineWidth});" ng-model="$parent.lineWidth" type="range" min="1" max="10" orient="vertical" /></div>
      </li>
      <li class="color-picker">
        <ul>
