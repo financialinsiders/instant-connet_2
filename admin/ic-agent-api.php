@@ -556,6 +556,7 @@ class IC_agent_api{
 		$agent_id = get_blog_option($blog_id, 'agent_id');
 		$endorser_id = $_POST['endorser_id'];
 		$session_id = $_POST['session_id'];
+		$user_info = get_userdata($endorser_id);
 		
 		$getIntroSessions = get_user_meta($_POST['endorser_id'], 'introduction_sessions', true);
 		
@@ -645,10 +646,10 @@ class IC_agent_api{
 					$vid_src = $_POST['video_url'].'.png';
 					$content .= "<div><img src='$vid_src'></div>";
 
-					//$ntm_mail->send_mail($value['email'], $subject, $content, '', '');
+					$ntm_mail->send_mail($value['email'], $subject, $content, $endorser_full_name, $user_info->user_email);
 				} else{
 					
-					//$ntm_mail->send_mail($value['email'], $subject, $content, '', '');
+					$ntm_mail->send_mail($value['email'], $subject, $content, $endorser_full_name, $user_info->user_email);
 					
 				}
 
