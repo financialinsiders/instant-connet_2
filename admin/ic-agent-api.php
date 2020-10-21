@@ -59,12 +59,118 @@ class IC_agent_api{
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
-			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message', 'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password');
+			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message', 'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data', 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings', 'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
+	}
+
+
+
+	function ic_update_cronofy_data() {
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		$agentID = $_POST['agentID'];
+		$refreshToken = $_POST['refreshToken'];
+		$subAccountID = $_POST['subAccount'];
+		update_user_meta($agentID, 'cronofy_refresh_token', $refreshToken);
+		update_user_meta($agentID, 'cronofy_sub_account', $subAccountID);
+		$response = array('status' => 'success', 'message' => 'cronofy information updated');
+		echo json_encode($response);
+		die(0);
+
+	}
+
+	function ic_get_cronofy_data() {
+		$refreshToken = get_user_meta($_GET['agentID'], 'cronofy_refresh_token', true);
+		$subAccount = get_user_meta($_GET['agentID'], 'cronofy_sub_account', true);
+		$response = array('status' => 'success', 'refreshToken' => $refreshToken, 'subAccount' => $subAccount );
+		echo json_encode($response);
+		die(0);
+
+	}
+
+	function ic_get_availability_calendars() {
+		$calendarAvailabilityIds = get_user_meta($_GET['agentID'], 'cronofy_availability_ids', true);
+		$response = array('status' => 'success', 'calendarAvailabilityIDs' => $calendarAvailabilityIds);
+		echo json_encode($response);
+		die(0);
+
+	}
+
+	function ic_set_availability_calendars() {
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		$agentID = $_POST['agentID'];
+		$calendarAvailabilityIDs = $_POST['calendarAvailabilityIDs'];
+		update_user_meta($agentID, 'cronofy_availability_ids', $calendarAvailabilityIDs);
+		$response = array('status' => 'success', 'message' => 'calendar availability ids have been saved');
+		echo json_encode($response);
+		die(0);
+	}
+
+	function ic_get_calendar_settings() {
+		
+		$arr = array('calendar_availabile_settings', 'calendar_invite', 'calendar_confirmation_email', 'calendar_appointment_reminder', 'calendar_cancelation_settings');
+		$calendarSettings = array();
+		foreach($arr as $a){
+			$calendarSettings[$a] = get_post_meta($_GET['agentID'], $a, true);
+		}
+
+		$response = array('status'=> 'success', 'data' => $calendarSettings);
+		echo json_encode($response);
+		die(0);
+		
+	}
+
+	function ic_set_calendar_settings() {
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		$arr = array('calendar_availabile_settings', 'calendar_invite', 'calendar_confirmation_email', 'calendar_appointment_reminder', 'calendar_cancelation_settings');
+
+		foreach($arr as $a){
+			update_post_meta($_POST['agentID'], $a, $_POST[$a]);
+		}
+
+		$response = array('status' => 'success', 'message' => 'calendar settings has been saved');
+		echo json_encode($response);
+		die(0);
+	}
+
+
+	
+
+	function ic_update_default_calendar() {
+		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		$agentID = $_POST['agentID'];
+		$calendarID = $_POST['calendarID'];
+		$calendarName = $POST['calendarName'];
+		$calendarProfileName = $_POST['profileName'];
+		$calendarProviderName = $_POST['providerName'];
+		
+		update_user_meta($agentID, 'cronofy_default_calendar_id', $calendarID);
+		update_user_meta($agentID, 'cronofy_default_calendar_name', $calendarName);
+		update_user_meta($agentID, 'cronofy_default_calendar_profile_name', $calendarProfileName);
+		update_user_meta($agentID, 'cronofy_default_calendar_provider_name', $calendarProviderName);
+
+		$response = array('status' => 'success', 'message' => 'Calendar Updated');
+		echo json_encode($response);
+		die(0);
+	}
+
+	function ic_get_default_calendar() {
+
+		//$calendarID = get_user_meta($_GET['agentID'], 'cronofy_default_calendar', true);
+		//$subAccount = get_user_meta($_GET['agentID'], 'cronofy_sub_account', true);
+
+		$calendarID = get_user_met($agentID, 'cronofy_default_calendar_id', true);
+		$calendarName = get_user_met($agentID, 'cronofy_default_calendar_name', true);
+		$calendarProfileName = get_user_met($agentID, 'cronofy_default_calendar_profile_name', true);
+		$calendarProviderName = get_user_met($agentID, 'cronofy_default_calendar_provider_name', true);
+
+		$response = array('status' => 'success', 'calendarID' => $calendarID, 'calendarName' => $calendarName, 'calendarProfileName' => $calendarProfileName, 'calendarProviderName' => $calendarProviderName);
+		echo json_encode($response);
+		die(0);
+
 	}
 
 	function ic_change_password(){
@@ -5311,11 +5417,11 @@ wp_redirect($link);
 					update_user_meta($user_id, 'issuePoints', $user['issue_points'] ? 1 : 0);
 				}
 				if( isset($user['video']) ){
-					//$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass'], $user['video']);
+					$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass'], $user['video']);
 				} else {
-				//	$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass']);
+					$ntm_mail->send_welcome_mail($user['user_email'], $user_id, $user['user_login'].'#'.$user['user_pass']);
 				}
-				//$ntm_mail->send_notification_mail($user_id);
+				$ntm_mail->send_notification_mail($user_id);
 
 				$response = array('status' => 'Success', 'data' => $user_id, 'msg' => 'Endorser created successfully');
 			}
