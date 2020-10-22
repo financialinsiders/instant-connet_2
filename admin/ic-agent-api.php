@@ -288,7 +288,8 @@ class IC_agent_api{
 	}
 
 	function get_geo(){
-		$loc = file_get_contents('http://api.ipstack.com/check?access_key=ba0006dcf32e6aa480a9729f70193c49');
+		$ipaddress = $_GET['ipaddress'];
+		$loc = file_get_contents('http://api.ipstack.com/' . $ipaddress . '?access_key=ba0006dcf32e6aa480a9729f70193c49');
     	echo $loc;
     	die(0);
 	}
