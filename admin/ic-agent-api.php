@@ -216,9 +216,13 @@ class IC_agent_api{
 	function ic_get_agent_profile() {
 
 		//$_GET = (array) json_decode(file_get_contents('php://input'));
+		$userEmail = get_userdata($_GET['agent_id'])->user_email;
+
 		if(isset($_GET['agent_id'])) {
 				$resp = get_user_meta($_GET['agent_id']);
+				$resp['email_address'] = $userEmail;
 				$resp['status'] = 'Success';
+				
 			} else {
 				$resp = array('status'=>'fail', 'message' => 'No Agent ID Passed');
 			}
