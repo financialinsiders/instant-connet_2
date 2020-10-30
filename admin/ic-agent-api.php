@@ -4525,14 +4525,19 @@ wp_redirect($link);
 		global $wpdb;
 		
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
-		if(isset($_POST['agent_id'])) {
-			$agent_id = $_POST['agent_id'];
-		}
+		
+		$agent_id = $_POST['agent_id'];
+		$meetingDateTime = $_POST['meeting_date_time'];
+		$cronofyMeetingID = $_POST['cronofy_meeting_id'];
+
 		$meetingId = time();
 		
 		$opentok = opentok_token();
-		
-		$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
+		if(isset($_POST['meeting_date_time'])) {
+			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => $meetingDateTime, 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']), 'event_id' => $cronofyMeetingID );
+		} else {
+			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
+		}
 		$meeting_id = $wpdb->insert_id;
 		
 		$opentok['id'] = $meeting_id;
