@@ -59,7 +59,14 @@ class IC_agent_api{
 			'ic_add_session_timeline', 'getIntro', 'ic_link', 'ic_shorten_link', 'ic_create_introduction',
 			'ic_timekit_google_callback', 'approve_endorser', 'ic_shorten_link_info',
 			'ic_widget_settings', 'get_geo', 'ic_update_lead_info', 'ic_get_endorser_intro',
-			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open', 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser','ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history', 'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message', 'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message', 'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data', 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings', 'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars');
+			'ic_endorser_message_video_info', 'ic_endorser_email_info', 'ic_resend_introduction', 'ic_track_introduction_open',
+			 'ic_add_endorser_bot', 'ic_endorser_bot','ic_update_default_endorser_bot', 'dis_approve_endorser',
+			 'ic_endorser_update_browser_id', 'ic_endorser_get_browser_id', 'ic_get_introduction_history',
+			  'ic_create_introduction_session', 'ic_endorser_set_notifications','ic_agent_new_message',
+			   'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message',
+				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
+				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
+				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
@@ -93,7 +100,7 @@ class IC_agent_api{
 
 	function ic_get_availability_calendars() {
 		$calendarAvailabilityIds = get_user_meta($_GET['agentID'], 'cronofy_availability_ids', true);
-		$response = array('status' => 'success', 'calendarAvailabilityIDs' => $calendarAvailabilityIds);
+		$response = array('status' => 'success', 'calendarAvailabilityData' => $calendarAvailabilityIds);
 		echo json_encode($response);
 		die(0);
 
@@ -102,6 +109,7 @@ class IC_agent_api{
 	function ic_set_availability_calendars() {
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
 		$agentID = $_POST['agentID'];
+		
 		$calendarAvailabilityIDs = $_POST['calendarAvailabilityIDs'];
 		update_user_meta($agentID, 'cronofy_availability_ids', $calendarAvailabilityIDs);
 		$response = array('status' => 'success', 'message' => 'calendar availability ids have been saved');
@@ -141,16 +149,13 @@ class IC_agent_api{
 
 	function ic_update_default_calendar() {
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		
 		$agentID = $_POST['agentID'];
 		$calendarID = $_POST['calendarID'];
-		$calendarName = $POST['calendarName'];
-		$calendarProfileName = $_POST['profileName'];
-		$calendarProviderName = $_POST['providerName'];
+	
 		
 		update_user_meta($agentID, 'cronofy_default_calendar_id', $calendarID);
-		update_user_meta($agentID, 'cronofy_default_calendar_name', $calendarName);
-		update_user_meta($agentID, 'cronofy_default_calendar_profile_name', $calendarProfileName);
-		update_user_meta($agentID, 'cronofy_default_calendar_provider_name', $calendarProviderName);
+	
 
 		$response = array('status' => 'success', 'message' => 'Calendar Updated');
 		echo json_encode($response);
@@ -161,13 +166,12 @@ class IC_agent_api{
 
 		//$calendarID = get_user_meta($_GET['agentID'], 'cronofy_default_calendar', true);
 		//$subAccount = get_user_meta($_GET['agentID'], 'cronofy_sub_account', true);
+		
+		$agentID = $_GET['agentID'];
+		$calendarID = get_user_meta($agentID, 'cronofy_default_calendar_id', true);
+		
 
-		$calendarID = get_user_met($agentID, 'cronofy_default_calendar_id', true);
-		$calendarName = get_user_met($agentID, 'cronofy_default_calendar_name', true);
-		$calendarProfileName = get_user_met($agentID, 'cronofy_default_calendar_profile_name', true);
-		$calendarProviderName = get_user_met($agentID, 'cronofy_default_calendar_provider_name', true);
-
-		$response = array('status' => 'success', 'calendarID' => $calendarID, 'calendarName' => $calendarName, 'calendarProfileName' => $calendarProfileName, 'calendarProviderName' => $calendarProviderName);
+		$response = array('status' => 'success', 'calendarID' => $calendarID);
 		echo json_encode($response);
 		die(0);
 
@@ -288,8 +292,8 @@ class IC_agent_api{
 	}
 
 	function get_geo(){
-		$ipaddress = $_GET['ipaddress'];
-		$loc = file_get_contents('http://api.ipstack.com/' . $ipaddress . '?access_key=ba0006dcf32e6aa480a9729f70193c49');
+	
+		$loc = file_get_contents('http://api.ipstack.com/' . $_SERVER['REMOTE_ADDR'] . '?access_key=ba0006dcf32e6aa480a9729f70193c49');
     	echo $loc;
     	die(0);
 	}
@@ -1169,6 +1173,7 @@ wp_redirect($link);
 	function ic_chat_bot_update(){
 		global $wpdb;
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
+		
 
 		$args = array('post_title' => $_POST['title'], 'post_content' => $_POST['content'], 'ID' => $_POST['ID'], 'post_status' => $_POST['status'] == 'true'? 'publish' : 'draft');
 
@@ -4520,13 +4525,15 @@ wp_redirect($link);
 		global $wpdb;
 		
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
-		if(isset($_POST['agent_id'])) {
-			$agent_id = $_POST['agent_id'];
-		}
+
+	
+		$agent_id = $_POST['agent_id'];
+		
+	
 		$meetingId = time();
 		
 		$opentok = opentok_token();
-		
+		$_POST['meetingDateTime'] 
 		$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
 		$meeting_id = $wpdb->insert_id;
 		
