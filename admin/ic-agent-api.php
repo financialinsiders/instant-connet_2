@@ -4534,7 +4534,7 @@ wp_redirect($link);
 		
 		$opentok = opentok_token();
 		if(isset($_POST['meeting_date_time'])) {
-			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => $meetingDateTime, 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']), 'event_id' => $cronofyMeetingID );
+			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => $meetingDateTime, 'session_id' => $opentok['sessionId'], 'token' => $opentok['token'], 'event_id' => $cronofyMeetingID ));
 		} else {
 			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
 		}
