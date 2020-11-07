@@ -209,7 +209,7 @@ class IC_agent_api{
 		unset($user['agent_id']);
 
 		foreach ($user as $key => $value) {
-			update_user_meta($user_id, $key, $value);
+			//update_user_meta($user_id, $key, $value);
 		}
 
 		$response = array('status' => 'Success', 'msg' => 'Agent Profile Updated');
