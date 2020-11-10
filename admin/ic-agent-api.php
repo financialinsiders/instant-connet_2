@@ -209,7 +209,7 @@ class IC_agent_api{
 		unset($user['agent_id']);
 
 		foreach ($user as $key => $value) {
-			//update_user_meta($user_id, $key, $value);
+			update_user_meta($user_id, $key, $value);
 		}
 
 		$response = array('status' => 'Success', 'msg' => 'Agent Profile Updated');
@@ -221,15 +221,19 @@ class IC_agent_api{
 
 		//$_GET = (array) json_decode(file_get_contents('php://input'));
 		$userEmail = get_userdata($_GET['agent_id'])->user_email;
-
+		
 		if(isset($_GET['agent_id'])) {
-				$resp = get_user_meta($_GET['agent_id']);
-				$resp['email_address'] = $userEmail;
-				$resp['status'] = 'Success';
-				
-			} else {
-				$resp = array('status'=>'fail', 'message' => 'No Agent ID Passed');
+			$array = array('first_name', 'last_name', 'email_address', 'address', 'agent_designation', 'agent_company_name',  'country', 'city', 'phone_number');
+			$resp = [];
+			foreach($array as $arr){
+				$resp[$arr] = get_user_meta($_GET['agent_id'], $arr, true);
 			}
+			$resp['email_address'] = $userEmail;
+			$resp['status'] = 'Success';
+				
+		} else {
+			$resp = array('status'=>'fail', 'message' => 'No Agent ID Passed');
+		}
 		echo json_encode($resp);
 		die(0);
 
