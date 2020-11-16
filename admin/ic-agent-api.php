@@ -66,7 +66,7 @@ class IC_agent_api{
 			   'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message',
 				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
 				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
-				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting');
+				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
@@ -4256,9 +4256,42 @@ wp_redirect($link);
 	}
 
 	function ic_cancel_meeting() {
+		global $wpdb;
 		$_POST = (array) json_decode(file_get_contents('php://input'));
 		$meetingID = $_POST['meetingID'];
+
+		$wpdb->update($wpdb->prefix . "meeting", array('description' => 'Cancelled'), array('id' => $meetingID));
+
 		$response = array('status' => 'success', 'message' => 'meeting canceled');
+		echo json_encode($response);
+		die(0);
+
+	}
+
+	function ic_cron_reminder_meeting() {
+		global $wpdb, $ntm_mail;
+
+		$_POST = (array) json_decode(file_get_contents('php://input'));
+		$meetingID = $_POST['meetingID'];
+
+		$res = $wpdb->get_results('select id from wp_meeting where description != "Cancelled" and description != "Reminder Sent" and ABS(TIMESTAMPDIFF(HOUR, created, "'.date('Y-m-d H:i:s').'")) = 1')
+
+		foreach ($res as $key => $value) {
+			$wpdb->update($wpdb->prefix . "meeting", array('description' => 'Reminder Sent'), array('id' => $value->id));
+
+			$participants = $wpdb->get_results('select * from wp_meeting_participants where meeting_id='.$value->id);
+
+			foreach ($participants as $key => $value2) {
+				$user_id = base64_encode(base64_encode($value->id.'#'.$value2->id));
+				$message = 'Your scheduled meeting will start in 1 hour. Here is your meeting link. <br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
+				$subject = "Reminder: Financial Insiders Meeting Link";
+		
+				$ntm_mail->send_mail($value2->email, $subject, $message);
+			}
+		}
+		
+
+		$response = array('status' => 'success', 'message' => 'Reminder mail sent');
 		echo json_encode($response);
 		die(0);
 
@@ -4562,8 +4595,9 @@ wp_redirect($link);
 		$opentok['id'] = $meeting_id;
 		$status = $_GET['st'] ? 3 : 2;
 
-		$d = (array)$_POST['participants'];
-
+		$d = array('email' => $_POST['email']);
+		$d['lead'] = $_POST['lead_id'];
+		$d['endorser'] = $_POST['endorser_id'];
 		$d['meeting_id'] = $meeting_id;
 		$d['meeting_date'] = date("Y-m-d H:i:s");
 		$d['status'] = $status;
