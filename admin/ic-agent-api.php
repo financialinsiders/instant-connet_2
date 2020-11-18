@@ -66,15 +66,14 @@ class IC_agent_api{
 			   'ic_endorser_get_notifications' , 'ic_agent_message', 'ic_retreive_bot_email_template','ic_agent__endorser_message',
 				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
 				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
-				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting');
+				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting', 'ic_get_endorser_appointments',
+				  'ic_get_lead_appointments');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
 	}
-
-
 
 	function ic_update_cronofy_data() {
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
@@ -86,7 +85,6 @@ class IC_agent_api{
 		$response = array('status' => 'success', 'message' => 'cronofy information updated');
 		echo json_encode($response);
 		die(0);
-
 	}
 
 	function ic_get_cronofy_data() {
@@ -95,7 +93,6 @@ class IC_agent_api{
 		$response = array('status' => 'success', 'refreshToken' => $refreshToken, 'subAccount' => $subAccount );
 		echo json_encode($response);
 		die(0);
-
 	}
 
 	function ic_get_availability_calendars() {
@@ -4268,18 +4265,54 @@ wp_redirect($link);
 
 	}
 
+	function ic_get_lead_appointments() {
+		global $wpdb;
+
+		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select * from '.$wpdb->prefix . 'meeting_participants where lead = '.$_GET['id'].')');
+
+		$new_res = array();
+
+		foreach ($variable as $key => $value) {
+			$tmp = (array) $value;
+			$tmp['participants'] = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id='.$value->id);
+			$new_res[] = $tmp;
+		}
+
+		$response = array('status' => 'success', 'data' => $new_res);
+		echo json_encode($response);
+		die(0);
+	}
+
+	function ic_get_endorser_appointments() {
+		global $wpdb;
+
+		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select * from '.$wpdb->prefix . 'meeting_participants where endorser = '.$_GET['id'].')');
+
+		$new_res = array();
+
+		foreach ($variable as $key => $value) {
+			$tmp = (array) $value;
+			$tmp['participants'] = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id='.$value->id);
+			$new_res[] = $tmp;
+		}
+
+		$response = array('status' => 'success', 'data' => $new_res);
+		echo json_encode($response);
+		die(0);
+	}
+
 	function ic_cron_reminder_meeting() {
 		global $wpdb, $ntm_mail;
 
 		$_POST = (array) json_decode(file_get_contents('php://input'));
 		$meetingID = $_POST['meetingID'];
 
-		$res = $wpdb->get_results('select id from wp_meeting where description != "Cancelled" and description != "Reminder Sent" and ABS(TIMESTAMPDIFF(HOUR, created, "'.date('Y-m-d H:i:s').'")) = 1')
+		$res = $wpdb->get_results('select id from '.$wpdb->prefix . 'meeting where description != "Cancelled" and description != "Reminder Sent" and ABS(TIMESTAMPDIFF(HOUR, created, "'.date('Y-m-d H:i:s').'")) = 1');
 
 		foreach ($res as $key => $value) {
 			$wpdb->update($wpdb->prefix . "meeting", array('description' => 'Reminder Sent'), array('id' => $value->id));
 
-			$participants = $wpdb->get_results('select * from wp_meeting_participants where meeting_id='.$value->id);
+			$participants = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id='.$value->id);
 
 			foreach ($participants as $key => $value2) {
 				$user_id = base64_encode(base64_encode($value->id.'#'.$value2->id));
