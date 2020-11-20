@@ -67,7 +67,7 @@ class IC_agent_api{
 				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
 				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
 				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting', 'ic_get_endorser_appointments',
-				  'ic_get_lead_appointments');
+				  'ic_get_lead_appointments', 'ic_get_meeting_id');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
@@ -4389,6 +4389,8 @@ wp_redirect($link);
 		echo json_encode($response);
 		die(0);
 	}
+
+
 	
 	function ic_lead_meeting() {
 		global $wpdb;
@@ -4651,6 +4653,19 @@ wp_redirect($link);
 		} else {
 			return $response;
 		}
+	}
+
+	function ic_get_meeting_id() {
+		global $wpdb;
+		
+		$agent_id = $_GET['agent_id'];
+		$meeting_time = $_GET['meeting_date_time'];
+		$siteID = get_active_blog_for_user( $agent_id )->blog_id;
+		switch_to_blog( $siteID );
+		$meeting = $wpdb->get_results("select * from ".$wpdb->prefix . "meeting where created = " . $meeting_time);
+		echo json_encode($meeting);
+		die(0);
+	
 	}
 	
 	function ic_instant_meeting($agent_id=0, $id=0)
