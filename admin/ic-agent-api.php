@@ -119,7 +119,7 @@ class IC_agent_api{
 		$arr = array('calendar_availabile_settings', 'calendar_invite', 'calendar_confirmation_email', 'calendar_appointment_reminder', 'calendar_cancelation_settings');
 		$calendarSettings = array();
 		foreach($arr as $a){
-			$calendarSettings[$a] = get_post_meta($_GET['agentID'], $a, true);
+			$calendarSettings[$a] = get_user_meta($_GET['agentID'], $a, true);
 		}
 
 		$response = array('status'=> 'success', 'data' => $calendarSettings);
@@ -133,7 +133,7 @@ class IC_agent_api{
 		$arr = array('calendar_availabile_settings', 'calendar_invite', 'calendar_confirmation_email', 'calendar_appointment_reminder', 'calendar_cancelation_settings');
 
 		foreach($arr as $a){
-			update_post_meta($_POST['agentID'], $a, $_POST[$a]);
+			update_user_meta($_POST['agentID'], $a, $_POST[$a]);
 		}
 
 		$response = array('status' => 'success', 'message' => 'calendar settings has been saved');
@@ -225,7 +225,7 @@ class IC_agent_api{
 			foreach($array as $arr){
 				$resp[$arr] = get_user_meta($_GET['agent_id'], $arr, true);
 			}
-			$resp['email_address'] = $userEmail;
+			$resp['email_address'] = $resp['email_address'] ? $resp['email_address'] : $userEmail;
 			$resp['status'] = 'Success';
 				
 		} else {
@@ -4307,6 +4307,12 @@ wp_redirect($link);
 		$_POST = (array) json_decode(file_get_contents('php://input'));
 		$meetingID = $_POST['meetingID'];
 
+		$blog_id = get_active_blog_for_user( $endorser_id )->blog_id;
+		$agent_id = get_blog_option($blog_id, 'agent_id');
+		$agent_email = get_user_meta($agent_id, 'email_address', true);
+
+		$remainderMailInfo = (array) get_user_meta($agent_id, 'calendar_appointment_reminder');
+
 		$res = $wpdb->get_results('select id from '.$wpdb->prefix . 'meeting where description != "Cancelled" and description != "Reminder Sent" and ABS(TIMESTAMPDIFF(HOUR, created, "'.date('Y-m-d H:i:s').'")) = 1');
 
 		foreach ($res as $key => $value) {
@@ -4314,12 +4320,18 @@ wp_redirect($link);
 
 			$participants = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id='.$value->id);
 
+
+
 			foreach ($participants as $key => $value2) {
 				$user_id = base64_encode(base64_encode($value->id.'#'.$value2->id));
-				$message = 'Your scheduled meeting will start in 1 hour. Here is your meeting link. <br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
-				$subject = "Reminder: Financial Insiders Meeting Link";
+				
+				$message = isset($remainderMailInfo['reminderEmailContent']) ? $remainderMailInfo['reminderEmailContent'] : 'Your scheduled meeting will start in 1 hour. Here is your meeting link.';
+
+				$message .= '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
+				$subject = isset($remainderMailInfo['reminderSubject']) ? $remainderMailInfo['reminderSubject'] : "Reminder: Financial Insiders Meeting Link";
 		
 				$ntm_mail->send_mail($value2->email, $subject, $message);
+				$ntm_mail->send_mail($agent_email, $subject, $message);
 			}
 		}
 		
@@ -4604,7 +4616,7 @@ wp_redirect($link);
 
 	function ic_appointment_meeting($agent_id)
 	{
-		global $wpdb;
+		global $wpdb, $ntm_mail;
 		
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
 		
@@ -4637,6 +4649,18 @@ wp_redirect($link);
 
 		$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
 		$pid = $wpdb->insert_id;
+
+		$agent_email = get_user_meta($agent_id, 'email_address', true);
+
+		$remainderMailInfo = (array) get_user_meta($agent_id, 'calendar_appointment_reminder');
+		
+		$message = isset($remainderMailInfo['confirmationEmailContent']) ? $remainderMailInfo['confirmationEmailContent'] : 'Your scheduled meeting will start in 1 hour. Here is your meeting link.';
+
+		$message .= '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
+		$subject = isset($remainderMailInfo['confirmationSubject']) ? $remainderMailInfo['confirmationSubject'] : "Reminder: Financial Insiders Meeting Link";
+
+		$ntm_mail->send_mail($_POST['email'], $subject, $message);
+		$ntm_mail->send_mail($agent_email, $subject, $message);
 
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
 		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));
