@@ -4280,7 +4280,7 @@ wp_redirect($link);
 	function ic_get_lead_appointments() {
 		global $wpdb;
 
-		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select * from '.$wpdb->prefix . 'meeting_participants where lead = '.$_GET['id'].')');
+		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where lead = '.$_GET['id'].')');
 
 		$new_res = array();
 
@@ -4298,7 +4298,7 @@ wp_redirect($link);
 	function ic_get_endorser_appointments() {
 		global $wpdb;
 
-		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select * from '.$wpdb->prefix . 'meeting_participants where endorser = '.$_GET['id'].')');
+		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where endorser = '.$_GET['id'].')');
 
 		$new_res = array();
 
