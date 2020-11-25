@@ -4282,15 +4282,18 @@ wp_redirect($link);
 
 		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where lead = '.$_GET['id'].')');
 
-		$new_res = array();
+		$meetingData = array();
 
-		foreach ($variable as $key => $value) {
-			$tmp = (array) $value;
-			$tmp['participants'] = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id='.$value->id);
-			$new_res[] = $tmp;
+		foreach ($variable as $key => $meeting) {
+			$admin_id = base64_encode(base64_encode($meeting->id.'#0'));
+            $tmp = array();
+            $tmp['adminLinkID'] = $admin_id;
+            $tmp['meetingID'] = $meeting->id;
+            $tmp['created'] = $meeting->created;
+            $meetingData[] = $tmp;
 		}
 
-		$response = array('status' => 'success', 'data' => $new_res);
+		$response = array('status' => 'success', 'data' => $meetingData);
 		echo json_encode($response);
 		die(0);
 	}
@@ -4300,15 +4303,18 @@ wp_redirect($link);
 
 		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where endorser = '.$_GET['id'].')');
 
-		$new_res = array();
+		$meetingData = array();
 
-		foreach ($variable as $key => $value) {
-			$tmp = (array) $value;
-			$tmp['participants'] = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id='.$value->id);
-			$new_res[] = $tmp;
+		foreach ($variable as $key => $meeting) {
+			$admin_id = base64_encode(base64_encode($meeting->id.'#0'));
+            $tmp = array();
+            $tmp['adminLinkID'] = $admin_id;
+            $tmp['meetingID'] = $meeting->id;
+            $tmp['created'] = $meeting->created;
+            $meetingData[] = $tmp;
 		}
 
-		$response = array('status' => 'success', 'data' => $new_res);
+		$response = array('status' => 'success', 'data' => $meetingData);
 		echo json_encode($response);
 		die(0);
 	}
