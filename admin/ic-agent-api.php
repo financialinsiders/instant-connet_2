@@ -4280,11 +4280,11 @@ wp_redirect($link);
 	function ic_get_lead_appointments() {
 		global $wpdb;
 
-		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where lead = '.$_GET['id'].')');
+		$results = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where lead = '.$_GET['id'].')');
 
 		$meetingData = array();
 
-		foreach ($variable as $key => $meeting) {
+		foreach ($results as $key => $meeting) {
 			$admin_id = base64_encode(base64_encode($meeting->id.'#0'));
             $tmp = array();
             $tmp['adminLinkID'] = $admin_id;
@@ -4301,11 +4301,11 @@ wp_redirect($link);
 	function ic_get_endorser_appointments() {
 		global $wpdb;
 
-		$res = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where endorser = '.$_GET['id'].')');
+		$results = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting where id in (select meeting_id from '.$wpdb->prefix . 'meeting_participants where endorser = '.$_GET['id'].')');
 
 		$meetingData = array();
 
-		foreach ($variable as $key => $meeting) {
+		foreach ($results as $key => $meeting) {
 			$admin_id = base64_encode(base64_encode($meeting->id.'#0'));
             $tmp = array();
             $tmp['adminLinkID'] = $admin_id;
