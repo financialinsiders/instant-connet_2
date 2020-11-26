@@ -83,6 +83,7 @@ class IC_front{
 				} else {
 					?>
 						$fiApp.botId = "<?php echo $botId;?>";
+						$fiApp.meetingId = "<?php echo $_GET['meetingId'];?>";
 						$fiApp.params = {};
 						<?php 
 							foreach ($_GET as $key => $value) {

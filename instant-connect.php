@@ -546,6 +546,7 @@
 			   created datetime NOT NULL,
 			   title tinytext NOT NULL,
 			   session_id text NOT NULL,
+			   bot_id int(11),
 			   token text NOT NULL,
 			   description text NOT NULL,
 			   agent_id text NOT NULL,

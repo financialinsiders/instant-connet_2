@@ -4641,6 +4641,7 @@ wp_redirect($link);
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
 		
 		$agent_id = $_POST['agent_id'];
+		$bot_id = $_POST['bot_id'];
 		$siteID = get_active_blog_for_user( $agent_id )->blog_id;
 		switch_to_blog( $siteID );
 
@@ -4654,9 +4655,9 @@ wp_redirect($link);
 		
 		$opentok = opentok_token();
 		if(isset($_POST['meeting_date_time'])) {
-			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => $meetingDateTime, 'session_id' => $opentok['sessionId'], 'token' => $opentok['token'], 'meeting_date_string' => $meetingCode ));
+			$wpdb->insert($wpdb->prefix . "meeting", array('bot_id' => $bot_id, 'agent_id' => $agent_id, 'created' => $meetingDateTime, 'session_id' => $opentok['sessionId'], 'token' => $opentok['token'], 'meeting_date_string' => $meetingCode ));
 		} else {
-			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
+			$wpdb->insert($wpdb->prefix . "meeting", array('bot_id' => $bot_id, 'agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
 		}
 		$meeting_id = $wpdb->insert_id;
 		
