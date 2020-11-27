@@ -32,10 +32,9 @@ else
 
   global $wpdb; $results = $meeting = $wpdb->get_row("select * from ".$wpdb->prefix . "meeting where id=".$meeting_id);
 
-  if(strtotime('now') < strtotime($meeting->meeting_date) && count($decode)==2){
+  if(($meeting->status == 1) || (strtotime('now') < strtotime($meeting->meeting_date) && count($decode)==2)){
 
-    $fa_lead_settings = get_option('fa_lead_settings');
-    wp_redirect(get_permalink($fa_lead_settings['waiting_page']).'?waitinghall='.$_GET['id']);
+    wp_redirect(get_permalink($meeting->bot_id).'?meetingId='.$_GET['id']);
     exit;
   }
 
