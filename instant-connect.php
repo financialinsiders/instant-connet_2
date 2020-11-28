@@ -544,6 +544,7 @@
 			$sql_one = "CREATE TABLE " . $mailtemplates . "(
 			  id int(11) NOT NULL AUTO_INCREMENT,
 			   created datetime NOT NULL,
+			   meeting_end_datetime datetime NOT NULL,
 			   title tinytext NOT NULL,
 			   session_id text NOT NULL,
 			   bot_id int(11),
