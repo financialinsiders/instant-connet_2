@@ -4684,9 +4684,9 @@ wp_redirect($link);
 
 		$emailTempData = (array) get_user_meta($bot_id, 'emailTempData');
 		
-		$message = isset($emailTempData['body']) ? $emailTempData['body'] ? $remainderMailInfo['confirmationEmailContent'];
+		$message = isset($emailTempData['body']) ? $emailTempData['body'] : $remainderMailInfo['confirmationEmailContent'];
 
-		$subject = isset($emailTempData['subject']) ? $emailTempData['subject'] ? $remainderMailInfo['confirmationSubject'];
+		$subject = isset($emailTempData['subject']) ? $emailTempData['subject'] : $remainderMailInfo['confirmationSubject'];
 
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
 		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));

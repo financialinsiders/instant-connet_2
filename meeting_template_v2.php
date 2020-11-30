@@ -34,7 +34,7 @@ else
 
   if(($meeting->status == 1) || (strtotime('now') < strtotime($meeting->meeting_date) && count($decode)==2)){
 
-    wp_redirect(get_permalink($meeting->bot_id).'?meetingId='.$_GET['id']);
+    wp_redirect(get_permalink($meeting->bot_id).'?meetingId='.$meeting_id);
     exit;
   }
 
