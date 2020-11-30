@@ -67,7 +67,7 @@ class IC_agent_api{
 				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
 				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
 				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting', 'ic_get_endorser_appointments',
-				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting');
+				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting','ic_get_meeting_data');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
@@ -4646,6 +4646,7 @@ wp_redirect($link);
 		
 		$agent_id = $_POST['agent_id'];
 		$bot_id = $_POST['bot_id'];
+		$meetingEndTime = $_POST['meeting_end_datetime'];
 		$siteID = get_active_blog_for_user( $agent_id )->blog_id;
 		switch_to_blog( $siteID );
 
@@ -4659,9 +4660,9 @@ wp_redirect($link);
 		
 		$opentok = opentok_token();
 		if(isset($_POST['meeting_date_time'])) {
-			$wpdb->insert($wpdb->prefix . "meeting", array('bot_id' => $bot_id, 'agent_id' => $agent_id, 'created' => $meetingDateTime, 'session_id' => $opentok['sessionId'], 'token' => $opentok['token'], 'meeting_date_string' => $meetingCode ));
+			$wpdb->insert($wpdb->prefix . "meeting", array('bot_id' => $bot_id, 'meeting_end_datetime' => $meetingEndTime, 'agent_id' => $agent_id, 'created' => $meetingDateTime, 'session_id' => $opentok['sessionId'], 'token' => $opentok['token'], 'meeting_date_string' => $meetingCode ));
 		} else {
-			$wpdb->insert($wpdb->prefix . "meeting", array('bot_id' => $bot_id, 'agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
+			$wpdb->insert($wpdb->prefix . "meeting", array('bot_id' => $bot_id, 'agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'meeting_end_datetime' =>  date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
 		}
 		$meeting_id = $wpdb->insert_id;
 		
@@ -4708,7 +4709,29 @@ wp_redirect($link);
 			return $response;
 		}
 	}
+	
+	function ic_get_meeting_data() {
+		global $wpdb;
+		$agent_id = $_GET['agent_id'];
+		$meeting_id = $_GET['meeting_id'];
+		$siteID = get_active_blog_for_user( $agent_id )->blog_id;
+		switch_to_blog( $siteID );
+		$meeting = $wpdb->get_row("select * from ".$wpdb->prefix."meeting where id = '".$meeting_id."'");
+		$data = array('startTime' => $meeting->created, 'endTime' => $meeting->meeting_end_datetime);
+		if($meeting->description == "Cancelled") {
+			$data['meetingStatus'] = "cancelled";
+		} else {
+			$data['meetingStatus'] = "active";
+		}
+		//$meetingStartTime = $meeting->created;
+		//$meetingEndTime = $meeting->meeting_end_datetime;
+		
 
+		$response = array('status' => 'success', 'data' => $data );
+		echo json_encode($response);
+		die(0);
+	}
+	
 	function ic_get_meeting_id() {
 		global $wpdb;
 		$agent_id = $_GET['agent_id'];
@@ -4725,6 +4748,8 @@ wp_redirect($link);
 		$meeting_id  = $meeting->id;
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
 		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));
+
+
 
 		$response = array('status' => 'success', 'meeting_id' => $meeting_id, 'meeting_admin_link' => $admin_id);
 		
