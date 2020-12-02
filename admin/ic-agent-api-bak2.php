@@ -67,34 +67,13 @@ class IC_agent_api{
 				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
 				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
 				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting', 'ic_get_endorser_appointments',
-				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting','ic_get_meeting_data', 'ic_set_agent_notifications', 'ic_get_agent_notifications');
+				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting','ic_get_meeting_data');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
 	}
-
-	
-function ic_set_agent_notifications() {
-	$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
-	
-	
-
-	update_user_meta($_POST['agentID'], 'notification_settings', $_POST['notification_settings']);
-	
-	$response = array('status' => 'success', 'message' => 'notification settings are saved');
-	echo json_encode($response);
-	die(0);
-
-}
-
-function ic_get_agent_notifications() {
-	$settings = get_user_meta($_GET['agentID'], 'notification_settings', true);
-	$response = array('status'=> 'success', 'data' => $settings );
-	echo json_encode($response);
-	die(0);
-}
 
 	function ic_update_cronofy_data() {
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
@@ -4366,15 +4345,11 @@ wp_redirect($link);
 				
 				$message = isset($remainderMailInfo['reminderEmailContent']) ? $remainderMailInfo['reminderEmailContent'] : 'Your scheduled meeting will start in 1 hour. Here is your meeting link.';
 
+				$message .= '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
 				$subject = isset($remainderMailInfo['reminderSubject']) ? $remainderMailInfo['reminderSubject'] : "Reminder: Financial Insiders Meeting Link";
-				
-				$admin_id = base64_encode(base64_encode($value->id.'#0'));
-				
-				$admin_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$admin_id.'">Click here to start your meeting</a>';
-				$user_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
-
-				$ntm_mail->send_mail($value2->email, $subject, $user_msg);
-				$ntm_mail->send_mail($agent_email, $subject, $admin_msg);
+		
+				$ntm_mail->send_mail($value2->email, $subject, $message);
+				$ntm_mail->send_mail($agent_email, $subject, $message);
 			}
 		}
 		
@@ -4703,21 +4678,17 @@ wp_redirect($link);
 		$agent_email = get_user_meta($agent_id, 'email_address', true);
 
 		$remainderMailInfo = (array) get_user_meta($agent_id, 'calendar_appointment_reminder');
-
-		$emailTempData = (array) get_user_meta($bot_id, 'emailTempData');
 		
-		$message = isset($emailTempData['body']) ? $emailTempData['body'] : $remainderMailInfo['confirmationEmailContent'];
+		$message = isset($remainderMailInfo['confirmationEmailContent']) ? $remainderMailInfo['confirmationEmailContent'] : 'Your scheduled meeting will start in 1 hour. Here is your meeting link.';
 
-		$subject = isset($emailTempData['subject']) ? $emailTempData['subject'] : $remainderMailInfo['confirmationSubject'];
+		$message .= '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
+		$subject = isset($remainderMailInfo['confirmationSubject']) ? $remainderMailInfo['confirmationSubject'] : "Reminder: Financial Insiders Meeting Link";
+
+		$ntm_mail->send_mail($_POST['email'], $subject, $message);
+		$ntm_mail->send_mail($agent_email, $subject, $message);
 
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
 		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));
-
-		$admin_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$admin_id.'">Click here to start your meeting</a>';
-		$user_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
-
-		$ntm_mail->send_mail($_POST['email'], $subject, $user_msg);
-		$ntm_mail->send_mail($agent_email, $subject, $admin_msg);
 		
 		$response = array('admin_id' => $admin_id, 'user_id' => $user_id, 'meeting_id' => $meeting_id, 'prefix' => $wpdb->prefix);
 		
@@ -4795,56 +4766,43 @@ wp_redirect($link);
 			$agent_id = $_POST['agent_id'];
 		}
 		
-		if(isset($_POST['meeting_id'])) {
-			$meeting_id = $_POST['meeting_id'];
-			$opentok = opentok_token();
 
-			$wpdb->update($wpdb->prefix . "meeting", array('session_id' => $opentok['sessionId'], 'token' => $opentok['token'], 'status' => 1), array('id' => $meeting_id));
-
-			$participants = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id = '.$meeting_id);
-
-			if(count($participants)) {
-				$pid = $participants[0]->id;
-			}
-
+		if(count($meeting)){
+			$nm = 'existing';
+			$meeting_id = $meeting[0]->id;
 		} else {
-			if(count($meeting)){
-				$nm = 'existing';
-				$meeting_id = $meeting[0]->id;
-			} else {
-				
-				$opentok = opentok_token();
-				
-				$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
-				$nm = 'new';
-				$meeting_id = $wpdb->insert_id;
-				
-			}
 			
-			$opentok['id'] = $meeting_id;
-			$status = $_GET['st'] ? 3 : 2;
+			$opentok = opentok_token();
+			
+			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
+			$nm = 'new';
+			$meeting_id = $wpdb->insert_id;
+			
+		}
+		
+		$opentok['id'] = $meeting_id;
+		$status = $_GET['st'] ? 3 : 2;
 
-			if(!$id) {
-				foreach($_POST['participants'] as $d){
-				$d = (array)$d;
-				$d['meeting_id'] = $meeting_id;
-				$d['meeting_date'] = date("Y-m-d H:i:s");
-				$d['status'] = $status;
+		if(!$id) {
+			foreach($_POST['participants'] as $d){
+			$d = (array)$d;
+			$d['meeting_id'] = $meeting_id;
+			$d['meeting_date'] = date("Y-m-d H:i:s");
+			$d['status'] = $status;
 
-				$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
-				$pid = $wpdb->insert_id;
-			}
-			} else{
-				$lead = $wpdb->get_row('select * from wp_leads where id = '.$id);
-				$d['meeting_id'] = $meeting_id;
-				$d['meeting_date'] = date("Y-m-d H:i:s");
-				$d['status'] = $status;
-				$d['email'] = $lead->email;
-				$d['name'] = $lead->first_name.' '.$lead->last_name;
-				$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
-				$pid = $wpdb->insert_id;
-				
-			}
+			$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
+			$pid = $wpdb->insert_id;
+		}
+		} else{
+			$lead = $wpdb->get_row('select * from wp_leads where id = '.$id);
+			$d['meeting_id'] = $meeting_id;
+			$d['meeting_date'] = date("Y-m-d H:i:s");
+			$d['status'] = $status;
+			$d['email'] = $lead->email;
+			$d['name'] = $lead->first_name.' '.$lead->last_name;
+			$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
+			$pid = $wpdb->insert_id;
+			
 		}
 		
 		
@@ -4852,7 +4810,7 @@ wp_redirect($link);
 		setcookie('finonce', $finonce);
 
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
-		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));
+		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid)); // I did it here.
 		if($id) {
 			
  			$message = 'Here is your meeting link. <br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
