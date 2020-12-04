@@ -91,7 +91,9 @@ function ic_set_agent_notifications() {
 
 function ic_get_agent_notifications() {
 	$settings = get_user_meta($_GET['agentID'], 'notification_settings', true);
-	$response = array('status'=> 'success', 'data' => $settings );
+	$user_info = get_userdata($_GET['agentID']);
+  	$emailAddress = $user_info->user_email;
+	$response = array('status'=> 'success', 'data' => $settings, 'admin_email' => $emailAddress);
 	echo json_encode($response);
 	die(0);
 }
