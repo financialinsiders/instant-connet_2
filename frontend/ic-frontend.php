@@ -108,7 +108,7 @@ class IC_front{
 						if($fiApp.endorserId || $fiApp.siteId){
 							var d = document, s = d.createElement('script'); 
 				            s.type = "text/javascript";
-				            s.src = "//chat.app.financialinsiders.ca/fichat.script.js";
+				            s.src = "https://financialinsiders.ca/fichat/fichat.script.js";
 				            d.body.appendChild(s);
 				            s.allow = 'camera; microphone';
 						}
@@ -142,7 +142,7 @@ class IC_front{
 					if($fiApp.endorserId || $fiApp.siteId){
 						var d = document, s = d.createElement('script'); 
 			            s.type = "text/javascript";
-			            s.src = "//chat.app.financialinsiders.ca/fichat.script.js";
+			            s.src = "https://financialinsiders.ca/fichat/fichat.script.js";
 			            d.body.appendChild(s);
 			            s.allow = 'camera; microphone';
 					}

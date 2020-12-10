@@ -67,36 +67,13 @@ class IC_agent_api{
 				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
 				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
 				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting', 'ic_get_endorser_appointments',
-				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting','ic_get_meeting_data', 'ic_set_agent_notifications', 'ic_get_agent_notifications');
+				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting','ic_get_meeting_data');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
 			add_action( 'wp_ajax_nopriv_'.$value, array( &$this, $value) );
 		}
 	}
-
-	
-function ic_set_agent_notifications() {
-	$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
-	
-	
-
-	update_user_meta($_POST['agentID'], 'notification_settings', $_POST['notification_settings']);
-	
-	$response = array('status' => 'success', 'message' => 'notification settings are saved');
-	echo json_encode($response);
-	die(0);
-
-}
-
-function ic_get_agent_notifications() {
-	$settings = get_user_meta($_GET['agentID'], 'notification_settings', true);
-	$user_info = get_userdata($_GET['agentID']);
-  	$emailAddress = $user_info->user_email;
-	$response = array('status'=> 'success', 'data' => $settings, 'admin_email' => $emailAddress);
-	echo json_encode($response);
-	die(0);
-}
 
 	function ic_update_cronofy_data() {
 		$_POST = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
@@ -4368,15 +4345,11 @@ wp_redirect($link);
 				
 				$message = isset($remainderMailInfo['reminderEmailContent']) ? $remainderMailInfo['reminderEmailContent'] : 'Your scheduled meeting will start in 1 hour. Here is your meeting link.';
 
+				$message .= '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
 				$subject = isset($remainderMailInfo['reminderSubject']) ? $remainderMailInfo['reminderSubject'] : "Reminder: Financial Insiders Meeting Link";
-				
-				$admin_id = base64_encode(base64_encode($value->id.'#0'));
-				
-				$admin_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$admin_id.'">Click here to start your meeting</a>';
-				$user_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
-
-				$ntm_mail->send_mail($value2->email, $subject, $user_msg);
-				$ntm_mail->send_mail($agent_email, $subject, $admin_msg);
+		
+				$ntm_mail->send_mail($value2->email, $subject, $message);
+				$ntm_mail->send_mail($agent_email, $subject, $message);
 			}
 		}
 		
@@ -4705,21 +4678,17 @@ wp_redirect($link);
 		$agent_email = get_user_meta($agent_id, 'email_address', true);
 
 		$remainderMailInfo = (array) get_user_meta($agent_id, 'calendar_appointment_reminder');
-
-		$emailTempData = (array) get_user_meta($bot_id, 'emailTempData');
 		
-		$message = isset($emailTempData['body']) ? $emailTempData['body'] : $remainderMailInfo['confirmationEmailContent'];
+		$message = isset($remainderMailInfo['confirmationEmailContent']) ? $remainderMailInfo['confirmationEmailContent'] : 'Your scheduled meeting will start in 1 hour. Here is your meeting link.';
 
-		$subject = isset($emailTempData['subject']) ? $emailTempData['subject'] : $remainderMailInfo['confirmationSubject'];
+		$message .= '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
+		$subject = isset($remainderMailInfo['confirmationSubject']) ? $remainderMailInfo['confirmationSubject'] : "Reminder: Financial Insiders Meeting Link";
+
+		$ntm_mail->send_mail($_POST['email'], $subject, $message);
+		$ntm_mail->send_mail($agent_email, $subject, $message);
 
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
 		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));
-
-		$admin_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$admin_id.'">Click here to start your meeting</a>';
-		$user_msg = $message . '<br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
-
-		$ntm_mail->send_mail($_POST['email'], $subject, $user_msg);
-		$ntm_mail->send_mail($agent_email, $subject, $admin_msg);
 		
 		$response = array('admin_id' => $admin_id, 'user_id' => $user_id, 'meeting_id' => $meeting_id, 'prefix' => $wpdb->prefix);
 		
@@ -4797,56 +4766,43 @@ wp_redirect($link);
 			$agent_id = $_POST['agent_id'];
 		}
 		
-		if(isset($_POST['meeting_id'])) {
-			$meeting_id = $_POST['meeting_id'];
-			$opentok = opentok_token();
 
-			$wpdb->update($wpdb->prefix . "meeting", array('session_id' => $opentok['sessionId'], 'token' => $opentok['token'], 'status' => 1), array('id' => $meeting_id));
-
-			$participants = $wpdb->get_results('select * from '.$wpdb->prefix . 'meeting_participants where meeting_id = '.$meeting_id);
-
-			if(count($participants)) {
-				$pid = $participants[0]->id;
-			}
-
+		if(count($meeting)){
+			$nm = 'existing';
+			$meeting_id = $meeting[0]->id;
 		} else {
-			if(count($meeting)){
-				$nm = 'existing';
-				$meeting_id = $meeting[0]->id;
-			} else {
-				
-				$opentok = opentok_token();
-				
-				$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
-				$nm = 'new';
-				$meeting_id = $wpdb->insert_id;
-				
-			}
 			
-			$opentok['id'] = $meeting_id;
-			$status = $_GET['st'] ? 3 : 2;
+			$opentok = opentok_token();
+			
+			$wpdb->insert($wpdb->prefix . "meeting", array('agent_id' => $agent_id, 'created' => date("Y-m-d H:i:s"), 'session_id' => $opentok['sessionId'], 'token' => $opentok['token']));
+			$nm = 'new';
+			$meeting_id = $wpdb->insert_id;
+			
+		}
+		
+		$opentok['id'] = $meeting_id;
+		$status = $_GET['st'] ? 3 : 2;
 
-			if(!$id) {
-				foreach($_POST['participants'] as $d){
-				$d = (array)$d;
-				$d['meeting_id'] = $meeting_id;
-				$d['meeting_date'] = date("Y-m-d H:i:s");
-				$d['status'] = $status;
+		if(!$id) {
+			foreach($_POST['participants'] as $d){
+			$d = (array)$d;
+			$d['meeting_id'] = $meeting_id;
+			$d['meeting_date'] = date("Y-m-d H:i:s");
+			$d['status'] = $status;
 
-				$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
-				$pid = $wpdb->insert_id;
-			}
-			} else{
-				$lead = $wpdb->get_row('select * from wp_leads where id = '.$id);
-				$d['meeting_id'] = $meeting_id;
-				$d['meeting_date'] = date("Y-m-d H:i:s");
-				$d['status'] = $status;
-				$d['email'] = $lead->email;
-				$d['name'] = $lead->first_name.' '.$lead->last_name;
-				$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
-				$pid = $wpdb->insert_id;
-				
-			}
+			$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
+			$pid = $wpdb->insert_id;
+		}
+		} else{
+			$lead = $wpdb->get_row('select * from wp_leads where id = '.$id);
+			$d['meeting_id'] = $meeting_id;
+			$d['meeting_date'] = date("Y-m-d H:i:s");
+			$d['status'] = $status;
+			$d['email'] = $lead->email;
+			$d['name'] = $lead->first_name.' '.$lead->last_name;
+			$wpdb->insert($wpdb->prefix . "meeting_participants", $d);
+			$pid = $wpdb->insert_id;
+			
 		}
 		
 		
@@ -4854,7 +4810,7 @@ wp_redirect($link);
 		setcookie('finonce', $finonce);
 
 		$admin_id = base64_encode(base64_encode($meeting_id.'#0'));
-		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid));
+		$user_id = base64_encode(base64_encode($meeting_id.'#'.$pid)); // I did it here.
 		if($id) {
 			
  			$message = 'Here is your meeting link. <br><br><a href="'.site_url().'/meeting?id='.$user_id.'">Click here to start your meeting</a>';
@@ -5070,40 +5026,157 @@ wp_redirect($link);
 				);
 				$wpdb->insert("wp_".$blog_id."_endorsements", $info);
 				//$content = file_get_contents('../emailtemplate/invitation.html');
-				$content = file_get_contents('../emailtemplate/newMail.html');
+				$content = "<!doctype html>
+<html>
+  <head>
+    <meta name='viewport' content='width=device-width'>
+    <meta http-equiv='Content-Type' content='text/html; charset=UTF-8'>
+    <title>Simple Transactional Email</title>
+    <style>
+    /* -------------------------------------
+        INLINED WITH htmlemail.io/inline
+    ------------------------------------- */
+    /* -------------------------------------
+        RESPONSIVE AND MOBILE FRIENDLY STYLES
+    ------------------------------------- */
+    @media only screen and (max-width: 620px) {
+      table[class=body] h1 {
+        font-size: 28px !important;
+        margin-bottom: 10px !important;
+      }
+      table[class=body] p,
+            table[class=body] ul,
+            table[class=body] ol,
+            table[class=body] td,
+            table[class=body] span,
+            table[class=body] a {
+        font-size: 16px !important;
+      }
+      table[class=body] .wrapper,
+            table[class=body] .article {
+        padding: 10px !important;
+      }
+      table[class=body] .content {
+        padding: 0 !important;
+      }
+      table[class=body] .container {
+        padding: 0 !important;
+        width: 100% !important;
+      }
+      table[class=body] .main {
+        border-left-width: 0 !important;
+        border-radius: 0 !important;
+        border-right-width: 0 !important;
+      }
+      table[class=body] .btn table {
+        width: 100% !important;
+      }
+      table[class=body] .btn a {
+        width: 100% !important;
+      }
+      table[class=body] .img-responsive {
+        height: auto !important;
+        max-width: 100% !important;
+        width: auto !important;
+      }
+    }
 
-				if($video) {
-					$video_thumb = '<tr>
-						<td class="bg_light email-section thumb" style="padding-bottom: 0px;">
-							<div class="overlay">
-								<a href="#">
-									<div class="thumbnail" id="myInvitationVideo" wid>
-										<img src="'.str_replace('webm', 'gif', $video).'">
-									</div>
-								</a>
-								<a href="#" class="playWrapper">
-								</a>
-							</div>
-						</td>
-					</tr>';
-					$content 	=	str_ireplace('[VIDEOTHUMB]', $video_thumb, $content);
-				}
-				
+    /* -------------------------------------
+        PRESERVE THESE STYLES IN THE HEAD
+    ------------------------------------- */
+    @media all {
+      .ExternalClass {
+        width: 100%;
+      }
+      .ExternalClass,
+            .ExternalClass p,
+            .ExternalClass span,
+            .ExternalClass font,
+            .ExternalClass td,
+            .ExternalClass div {
+        line-height: 100%;
+      }
+      .apple-link a {
+        color: inherit !important;
+        font-family: inherit !important;
+        font-size: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+        text-decoration: none !important;
+      }
+      .btn-primary table td:hover {
+        background-color: #34495e !important;
+      }
+      .btn-primary a:hover {
+        background-color: #34495e !important;
+        border-color: #34495e !important;
+      }
+    }
+    </style>
+  </head>
+  <body class='' style='background-color: #f6f6f6; font-family: sans-serif; -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.4; margin: 0; padding: 0; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;'>
+    <table border='0' cellpadding='0' cellspacing='0' class='body' style='border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; background-color: #f6f6f6;'>
+      <tr>
+        <td style='font-family: sans-serif; font-size: 14px; vertical-align: top;'>&nbsp;</td>
+        <td class='container' style='font-family: sans-serif; font-size: 14px; vertical-align: top; display: block; Margin: 0 auto; max-width: 580px; padding: 10px; width: 580px;'>
+          <div class='content' style='box-sizing: border-box; display: block; Margin: 0 auto; max-width: 580px; padding: 10px;'>
 
-				$emailTempData = (array) get_post_meta($botId, 'emailTempData', true);
+            <!-- START CENTERED WHITE CONTAINER -->
+            <span class='preheader' style='color: transparent; display: none; height: 0; max-height: 0; max-width: 0; opacity: 0; overflow: hidden; mso-hide: all; visibility: hidden; width: 0;'>This is preheader text. Some clients will show this text as a preview.</span>
+            <table class='main' style='border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%; background: #ffffff; border-radius: 3px;'>
 
-				$subject = $emailTempData['subject'];
+              <!-- START MAIN CONTENT AREA -->
+              <tr>
+                <td class='wrapper' style='font-family: sans-serif; font-size: 14px; vertical-align: top; box-sizing: border-box; padding: 20px;'>
+                  <table border='0' cellpadding='0' cellspacing='0' style='border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;'>
+                    <tr>
+                      <td style='font-family: sans-serif; font-size: 14px; vertical-align: top;'>
+                        <p style='font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;'>Hi [USERNAME],</p>
+                        <p style='font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;'>
+                          [EMAILINVIATION] [BOTLINK] [TRACKIMAGE]
+                        </p>
+                        <p style='font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;'>[PERSONALNOTE].</p>
+                        <p style='font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;'>Good luck! Hope it works.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-				$content 	=	str_ireplace('[BOTMESSAGE]', $emailTempData['body'], $content);
-				$content 	=	str_ireplace('[FIRSTBUTTON]', $emailTempData['firstButton'], $content);
-				$content 	=	str_ireplace('[SECONDBUTTON]', $emailTempData['secondButton'], $content);
-				$content 	=	str_ireplace('[PREHEADER]', $emailTempData['preheader'], $content);
-				
+            <!-- END MAIN CONTENT AREA -->
+            </table>
+
+            <!-- START FOOTER -->
+            <div class='footer' style='clear: both; Margin-top: 10px; text-align: center; width: 100%;'>
+              <table border='0' cellpadding='0' cellspacing='0' style='border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt; width: 100%;'>
+                <tr>
+                  <td class='content-block' style='font-family: sans-serif; vertical-align: top; padding-bottom: 10px; padding-top: 10px; font-size: 12px; color: #999999; text-align: center;'>
+                    <span class='apple-link' style='color: #999999; font-size: 12px; text-align: center;'>Company Inc, 3 Abbey Road, San Francisco CA 94102</span>
+                    <br> Don't like these emails? <a href='http://i.imgur.com/CScmqnj.gif' style='text-decoration: underline; color: #999999; font-size: 12px; text-align: center;'>Unsubscribe</a>.
+                  </td>
+                </tr>
+                <tr>
+                  <td class='content-block powered-by' style='font-family: sans-serif; vertical-align: top; padding-bottom: 10px; padding-top: 10px; font-size: 12px; color: #999999; text-align: center;'>
+                    Powered by <a href='http://htmlemail.io' style='color: #999999; font-size: 12px; text-align: center; text-decoration: none;'>HTMLemail</a>.
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <!-- END FOOTER -->
+
+          <!-- END CENTERED WHITE CONTAINER -->
+          </div>
+        </td>
+        <td style='font-family: sans-serif; font-size: 14px; vertical-align: top;'>&nbsp;</td>
+      </tr>
+    </table>
+  </body>
+</html>";
 				$content 	=	str_ireplace('[USERNAME]', $res['name'], $content);
 				$content 	=	str_ireplace('[ENDORSERNAME]', get_user_meta($_POST['id'], 'first_name', true), $content);
 				$content 	=	str_ireplace('[BOTLINK]', get_permalink($botId).'?ref='.base64_encode(base64_encode($botId.'#&$#'.$endorser.'#&$#'.$wpdb->insert_id)).'&video='.$video, $content);
 
-				//$content 	=	str_ireplace('[EMAILINVIATION]', $email_invitation, $content);
+				$content 	=	str_ireplace('[EMAILINVIATION]', $email_invitation, $content);
 				$content 	=	str_ireplace('[PERSONALNOTE]', $notes, $content);
 
 				$image = "<img src='".site_url('wp-admin/admin-ajax.php?action=ic_track_invitation_open&ref='.base64_encode(base64_encode($eeid.'#&$#'.$_POST['id'].'#&$#'.$info['tracker_id'])))."' width='1' height='1'>";
