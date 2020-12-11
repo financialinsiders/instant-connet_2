@@ -67,7 +67,8 @@ class IC_agent_api{
 				'ic_update_agent_profile', 'ic_get_agent_profile', 'ic_change_password','ic_update_cronofy_data','ic_get_cronofy_data',
 				 'ic_receive_cronofy_data', 'ic_update_default_calendar', 'ic_get_default_calendar','ic_get_calendar_settings',
 				  'ic_set_calendar_settings', 'ic_set_availability_calendars', 'ic_get_availability_calendars', 'ic_cancel_meeting', 'ic_cron_reminder_meeting', 'ic_get_endorser_appointments',
-				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting','ic_get_meeting_data', 'ic_set_agent_notifications', 'ic_get_agent_notifications');
+				  'ic_get_lead_appointments', 'ic_get_meeting_id', 'ic_reschedule_meeting','ic_get_meeting_data', 'ic_set_agent_notifications', 'ic_get_agent_notifications',
+				  'ic_update_endorser_each_info');
 		
 		foreach ($functions as $key => $value) {
 			add_action( 'wp_ajax_'.$value, array( &$this, $value) );
@@ -4238,6 +4239,14 @@ wp_redirect($link);
 			'meeting_conversion' => $meeting_conversion->cnt ? $meeting_conversion->cnt : 0,
 			'leads' => $leads,
 			'name' => get_user_meta($endorser_id, 'first_name', true). ' '. get_user_meta($endorser_id, 'last_name', true),
+			'first_name' => get_user_meta($endorser_id, 'first_name', true),
+			'last_name' => get_user_meta($endorser_id, 'last_name', true),
+			
+			'defaultBot' => get_user_meta($endorser_id, 'defaultBot', true),
+			'defaultContent' => get_user_meta($endorser_id, 'defaultContent', true),
+			'emailPoints' => get_user_meta($endorser_id, 'emailPoints', true),
+			'videoPoints' => get_user_meta($endorser_id, 'videoPoints', true),
+
 			'email' => $endorser->user_email,
 			'phone' => get_user_meta($endorser_id, 'phone', true),
 			'agent_id' => $agent_id,
@@ -4251,6 +4260,19 @@ wp_redirect($link);
 
 		$response = array('status' => 'Success', 'data' => $data);
 
+		echo json_encode($response);
+		die(0);
+		exit;
+	}
+
+	function ic_update_endorser_each_info(){
+		if($_POST['name'] != 'email'){
+			update_user_meta($_GET['id'], $_POST['name'], $_POST['value']);
+		} else {
+			wp_update_user(array('ID' => $_GET['id'], 'user_email' => $_POST['value']));
+		}
+
+		$response = array('status' => 'Success');
 		echo json_encode($response);
 		die(0);
 		exit;
