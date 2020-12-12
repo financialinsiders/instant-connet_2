@@ -4266,11 +4266,18 @@ wp_redirect($link);
 	}
 
 	function ic_update_endorser_each_info(){
-		if($_POST['name'] != 'email'){
-			update_user_meta($_GET['id'], $_POST['name'], $_POST['value']);
+		global $wpdb;
+
+		if($_POST['is_lead']) {
+			$wpdb->update('wp_leads', array($_POST['name'] => $_POST['value']), array('id' => $_GET['id']));
 		} else {
-			wp_update_user(array('ID' => $_GET['id'], 'user_email' => $_POST['value']));
+			if($_POST['name'] != 'email'){
+				update_user_meta($_GET['id'], $_POST['name'], $_POST['value']);
+			} else {
+				wp_update_user(array('ID' => $_GET['id'], 'user_email' => $_POST['value']));
+			}
 		}
+		
 
 		$response = array('status' => 'Success');
 		echo json_encode($response);
@@ -4282,13 +4289,8 @@ wp_redirect($link);
 		global $wpdb;
 
 		$lead_id = $_GET['id'];
-		
-
 
 		$lead_info = $wpdb->get_results("select * from wp_leads where id = ".$lead_id);
-		
-
-		
 
 		$response = array('status' => 'Success', 'data' => $lead_info[0]);
 
@@ -4973,7 +4975,12 @@ wp_redirect($link);
 
 			$agent_id = get_blog_option($blog_id, 'agent_id');
 			$settings = get_user_meta($agent_id, 'endorsement_settings', true);
-			$points = $settings[$type] ;
+			if($_POST['type'] == 'manual'){
+				$points = $_POST['points'];
+			} else {
+				$points = $settings[$type] ;
+			}
+			
 
 			$monthly_invitation_allowance = $settings['monthly_invitation_allowance'];
 			$results = $wpdb->get_row("select sum(points) as points from wp_".$blog_id."_points_transaction where created like '".date("Y-m-")."%' and type in ('email_invitation', 'fbShare', 'liShare') and endorser_id='".$_POST['endorser_id']."'");
