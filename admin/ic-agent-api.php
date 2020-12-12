@@ -327,10 +327,10 @@ function ic_get_agent_notifications() {
 		global $wpdb;
 
 		$lead = count($_POST) ? $_POST : (array) json_decode(file_get_contents('php://input'));
-		unset($lead['endorser_id']);
-		$wpdb->update("wp_leads", $lead, array('id' => $_GET['id']));
+		//unset($lead['endorser_id']);
+		$wpdb->update("wp_leads", $lead, array('id' => $lead['id']));
 
-		$response = array('status' => 'Success', 'id' => $_GET['id'], 'msg' => 'Lead updated successfully');
+		$response = array('status' => 'Success', 'id' => $lead['id'], 'msg' => 'Lead updated successfully', 'data' => $lead);
 		
 		echo json_encode($response);
 		die(0);
